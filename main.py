@@ -69,7 +69,6 @@ if __name__ == '__main__':
     
     
     
-    
     # TRAINING
     
     for epoch in range(epochs):
@@ -77,16 +76,21 @@ if __name__ == '__main__':
         for x in range(dims[0]):
             for y in range(dims[1]):
                 for z in range(dims[2]):
-                  n_igm_nbh = torch.tensor(get_neighborhood(n_igm, x,y,z, r))
-                  n_src_nbh = torch.tensor(get_neighborhood(n_src, x,y,z, r))
-                  loss_fn = nn.CrossEntropyLoss()
-                  optimizer.zero_grad()  # set the gradients to 0
-                  output= net(n_igm_nbh, n_src_nbh)
-                  output_matrix[x,y,z] = output.numpy()
-                  loss = loss_fn(output, xi[x,y,z])  # compute loss function
-                  loss.backward()  # backpropagation
-                  optimizer.step()
-
+                
+                    n_igm_nbh = get_neighborhood(n_igm, x,y,z, r)
+                    n_src_nbh = get_neighborhood(n_src, x,y,z, r)
+                    loss_fn = torch.nn.MSELoss()
+                    optimizer.zero_grad()  # set the gradients to 0
+                    output= net(n_igm_nbh.float(), n_src_nbh.float())
+                    temp = torch.Tensor.detach(output)
+                    to_output_matrix = torch.Tensor.numpy(temp)
+                    output_matrix[x,y,z] = to_output_matrix
+                    print(output.shape)
+                    estimation = torch.Tensor([xi[x,y,z]])
+                    print(estimation)
+                    loss = loss_fn(output, estimation)  # compute loss function
+                    loss.backward()  # backpropagation
+                    optimizer.step()
 
     print("Epoch {:.2f} | Training loss: {:.5f}".format(epoch, loss))
 
