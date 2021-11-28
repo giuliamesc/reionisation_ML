@@ -12,6 +12,8 @@ def get_neighborhood(T,x0,y0,z0,r): # T = original tensor, (x0,y0,z0) central po
     idy = range(y0-r,y0+r+1)
     idz = range(z0-r,z0+r+1)
     neigh = T[idx,:,:][:,idy,:][:,:,idz]
+    neigh = torch.from_numpy(neigh)
+    neigh = neigh[None, None, :,:,:]
     return neigh
 
 
