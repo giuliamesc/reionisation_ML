@@ -80,8 +80,8 @@ if __name__ == '__main__':
             for y in range(dims[1]):
                 for z in range(dims[2]):
                 
-                    n_igm_nbh = get_neighborhood(n_igm, x,y,z, r)
-                    n_src_nbh = get_neighborhood(n_src, x,y,z, r)
+                    n_igm_nbh = torch.tensor(get_neighborhood(n_igm, x,y,z, r))
+                    n_src_nbh = torch.tensor(get_neighborhood(n_src, x,y,z, r))
                     loss_fn = torch.nn.MSELoss()
                     optimizer.zero_grad()  # set the gradients to 0
                     output= net(n_igm_nbh.float(), n_src_nbh.float())

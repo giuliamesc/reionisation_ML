@@ -12,38 +12,40 @@ class CNN(nn.Module):
         self.kernel_size = 5
         self.padding = (self.kernel_size - 1)/2 
         self.stride_conv = 1
-        self.stride_pool = self.kernel_size
+        
         self.kernel_pooling = 2
+        self.stride_pool = self.kernel_pooling
+        
         
         # LEFT BRANCH
-        self.conv3d_6 = nn.Conv3d(in_channels=1, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=self.padding)
+        self.conv3d_6 = nn.Conv3d(in_channels=1, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=2)
         self.batch_normalization_6 = nn.BatchNorm3d(num_features=128)
         self.leaky_re_lu_6 = nn.LeakyReLU()
         self.average_pooling_3d_6 = nn.AvgPool3d(kernel_size = self.kernel_pooling)
         
-        self.conv3d_7 = nn.Conv3d(in_channels=128, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=self.padding)
+        self.conv3d_7 = nn.Conv3d(in_channels=128, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=2)
         self.batch_normalization_7 = nn.BatchNorm3d(num_features=128)
         self.leaky_re_lu_7 = nn.LeakyReLU()
         self.average_pooling_3d_7 = nn.AvgPool3d(kernel_size = self.kernel_pooling)
         
-        self.conv3d_8 = nn.Conv3d(in_channels=128, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=self.padding)
+        self.conv3d_8 = nn.Conv3d(in_channels=128, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=2)
         self.batch_normalization_8 = nn.BatchNorm3d(num_features=128)
         self.leaky_re_lu_8 = nn.LeakyReLU()
         self.average_pooling_3d_8 = nn.AvgPool3d(kernel_size = self.kernel_pooling)
         
         
         # RIGHT BRANCH
-        self.conv3d_15 = nn.Conv3d(in_channels=1, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=self.padding)
+        self.conv3d_15 = nn.Conv3d(in_channels=1, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=2)
         self.batch_normalization_15 = nn.BatchNorm3d(num_features=128)
         self.leaky_re_lu_15 = nn.LeakyReLU()
         self.average_pooling_3d_15 = nn.AvgPool3d(kernel_size = self.kernel_pooling)
         
-        self.conv3d_16 = nn.Conv3d(in_channels=128, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=self.padding)
+        self.conv3d_16 = nn.Conv3d(in_channels=128, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=2)
         self.batch_normalization_16 = nn.BatchNorm3d(num_features=128)
         self.leaky_re_lu_16 = nn.LeakyReLU()
         self.average_pooling_3d_16 = nn.AvgPool3d(kernel_size = self.kernel_pooling)
         
-        self.conv3d_17 = nn.Conv3d(in_channels=128, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=self.padding)
+        self.conv3d_17 = nn.Conv3d(in_channels=128, out_channels=128, kernel_size=self.kernel_size, stride=self.stride_conv, padding=2)
         self.batch_normalization_17 = nn.BatchNorm3d(num_features=128)
         self.leaky_re_lu_17 = nn.LeakyReLU()
         self.average_pooling_3d_17 = nn.AvgPool3d(kernel_size = self.kernel_pooling)
