@@ -9,9 +9,12 @@ from torch import optim
 
 def get_neighborhood(T,x0,y0,z0,r): # T = original tensor, (x0,y0,z0) central point, r = radius 
     
-    idx = range(x0-r,x0+r+1)
-    idy = range(y0-r,y0+r+1)
-    idz = range(z0-r,z0+r+1)
+    edge = T.shape[3]
+    
+    # '+' for lists is to concatenate when x0+r exceeds the cube edge
+    idx = list(range(x0-r, min(edge,x0+r+1))) + list(range(max(edge,x0+r+1) % edge))
+    idy = list(range(y0-r, min(edge,y0+r+1))) + list(range(max(edge,y0+r+1) % edge))
+    idz = list(range(z0-r, min(edge,z0+r+1))) + list(range(max(edge,z0+r+1) % edge))
     
     Tm = T[0,0,:,:,:]
     neigh = Tm[idx,:,:][:,idy,:][:,:,idz]
