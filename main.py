@@ -3,6 +3,8 @@ import CNN
 import torch
 from torch import nn
 from torch import optim
+import random
+import itertools
 
 
 
@@ -35,6 +37,10 @@ def preprocessing(n_igm,n_src):
     n_igm = (n_igm - mean_n_igm) / std_n_igm
     n_src = (n_src - mean_n_src) / std_n_src
     return n_igm, n_src
+
+
+def printing (loss, epoch, n_epochs, iter, n_iters):
+    print ('epoch ', epoch+1,'/',n_epochs, '   iter ',iter+1, '/',n_iters, '      loss = ', torch.Tensor.detach(loss).item())
     
 
 
@@ -74,26 +80,29 @@ if __name__ == '__main__':
     
     # TRAINING
     
+    random.seed(2021)
+    total_points = list(itertools.product(range(dims[0]),range(dims[1]),range(dims[2]))) 
+    
     for epoch in range(epochs):
+        
+        
+        batch = random.sample(total_points, k = 3000)
+        batch_tr = batch[:2500]
+        batch_te = batch[2500:]
       
-        for x in range(dims[0]):
-            for y in range(dims[1]):
-                for z in range(dims[2]):
+        for iter,P in enumerate(batch_tr):
                 
-                    n_igm_nbh = torch.tensor(get_neighborhood(n_igm, x,y,z, r))
-                    n_src_nbh = torch.tensor(get_neighborhood(n_src, x,y,z, r))
-                    loss_fn = torch.nn.MSELoss()
-                    optimizer.zero_grad()  # set the gradients to 0
-                    output= net(n_igm_nbh.float(), n_src_nbh.float())
-                    temp = torch.Tensor.detach(output)
-                    to_output_matrix = torch.Tensor.numpy(temp)
-                    output_matrix[x,y,z] = to_output_matrix
-                    print(output.shape)
-                    estimation = torch.Tensor([xi[x,y,z]])
-                    print(estimation)
-                    loss = loss_fn(output, estimation)  # compute loss function
-                    loss.backward()  # backpropagation
-                    optimizer.step()
+            n_igm_nbh = torch.tensor(get_neighborhood(n_igm, P[0],P[1],P[2], r)).float()
+            n_src_nbh = torch.tensor(get_neighborhood(n_src, P[0],P[1],P[2], r)).float()
+            
+            loss_fn = torch.nn.MSELoss()
+            optimizer.zero_grad()  # set the gradients to 0
+            output= net(n_igm_nbh, n_src_nbh) # forward
+            estimation = torch.tensor([xi[P[0],P[1],P[2]]]).float()
+            loss = loss_fn(output, estimation)  # compute loss function
+            printing (loss, epoch, epochs, iter, 2500)
+            loss.backward()  # backpropagation
+            optimizer.step()
 
     print("Epoch {:.2f} | Training loss: {:.5f}".format(epoch, loss))
 

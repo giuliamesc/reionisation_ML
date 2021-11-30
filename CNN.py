@@ -118,7 +118,7 @@ class CNN(nn.Module):
         
         # CENTRAL BRANCH
         
-        out = torch.cat((out1, out2), dim = 0) # concatenating the tensors along the 3th dim
+        out = torch.cat((out1, out2), dim = 1) # concatenating the tensors along the channel dim
         out = torch.flatten(out)
 
         out = self.dropout(out)
