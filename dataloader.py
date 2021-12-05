@@ -11,7 +11,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import train_test_split
 
 # path to preprocessed dataset
-path_preproc = '..\reionisation_ML\cubes'
+path_preproc = '../reionisation_ML/cubes/'
 
 # number of data to use in the training and validation
 dataset_size = 2000
