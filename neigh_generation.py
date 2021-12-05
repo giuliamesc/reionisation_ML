@@ -35,21 +35,30 @@ def get_neighborhood(T,P,r): # T = original tensor, (x0,y0,z0) central point, r 
 z = 8.397
 r = 24
 
-random.seed(2021)
+np.random.seed(2021)
     
-n_igm = np.load('../dataset/rho_z%.3f.npy' %z)  # density of intergalactic medium\n"
-n_src = np.load('../dataset/nsrc_z%.3f.npy' %z) # number of sources per volume\n"
+n_igm = np.load('../dataset/rho_z%.3f.npy' %z)  # density of intergalactic medium
+n_src = np.load('../dataset/nsrc_z%.3f.npy' %z) # number of sources per volume
+xi = np.load('../dataset/xHII_z%.3f.npy' %z) #ionization rate
 
 dims = n_igm.shape
 
-total_points = list(itertools.product(range(dims[0]),range(dims[1]),range(dims[2]))) # cartesian product
+#total_points = list(itertools.product(range(dims[0]),range(dims[1]),range(dims[2]))) # cartesian product
 
-small_total = random.sample(total_points, k = 3000)
+ind1 = np.random.randint(0,300, 3000)
+ind2 = np.random.randint(0,300, 3000)
+ind3 = np.random.randint(0,300, 3000)
 
-for count,P in enumerate(small_total):
+#small_total = random.sample(total_points, k = 100)
 
-    n_igm_nbh = torch.tensor(get_neighborhood(n_igm, P, r)).float()
-    n_src_nbh = torch.tensor(get_neighborhood(n_src, P, r)).float()
+my_xi = torch.flatten(torch.Tensor(xi[ind1,ind2,ind3]))
+my_xi = my_xi.numpy()
+np.savetxt('cubes/xi_flatten.txt', my_xi)
+
+# for count,P in enumerate(small_total):
+
+#     n_igm_nbh = torch.tensor(get_neighborhood(n_igm, P, r)).float()
+#     n_src_nbh = torch.tensor(get_neighborhood(n_src, P, r)).float()
     
-    np.save('cubes/n_igm_i%d.npy' % count, n_igm_nbh)
-    np.save('cubes/n_src_i%d.npy' % count, n_src_nbh)
+#     np.save('cubes/n_igm_i%d.npy' % count, n_igm_nbh)
+#     np.save('cubes/n_src_i%d.npy' % count, n_src_nbh)
