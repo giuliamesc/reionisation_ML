@@ -77,7 +77,7 @@ np.savetxt('cubes/xi_flatten.txt', my_xi)
 
 small_total = np.reshape(np.array([ind1,ind2,ind3]), [S,3])
 
-for count in range(D):
+for count in range(S):
     
     P = small_total[count,:]
 
