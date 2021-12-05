@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 path_preproc = '../reionisation_ML/cubes/'
 
 # number of data to use in the training and validation
-dataset_size = 2000
+dataset_size = 3000
 
 # load and prepare dataset with shape (dataset_size, input_type, channel_size, xdim, ydim, zdim)
 X = np.zeros((dataset_size, 2, 1, 49, 49, 49))
