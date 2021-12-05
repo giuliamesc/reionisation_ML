@@ -4,54 +4,19 @@ import torch
 from torch import nn
 from torch import optim
 import random
-import itertools
+from torch.utils.data import TensorDataset, DataLoader
+from sklearn.model_selection import train_test_split
 
 
-
-
-def get_neighborhood(T,P,r): # T = original tensor, (x0,y0,z0) central point, r = radius 
-    
-    edge = T.shape[3]
-    
-    x0 = P[0]
-    y0 = P[1]
-    z0 = P[2]
-    
-    # '+' for lists is to concatenate when x0+r exceeds the cube edge
-    idx = list(range(x0-r, min(edge,x0+r+1))) + list(range(max(edge,x0+r+1) % edge))
-    idy = list(range(y0-r, min(edge,y0+r+1))) + list(range(max(edge,y0+r+1) % edge))
-    idz = list(range(z0-r, min(edge,z0+r+1))) + list(range(max(edge,z0+r+1) % edge))
-    
-    Tm = T[0,0,:,:,:]
-    neigh = Tm[idx,:,:][:,idy,:][:,:,idz]
-    neigh = np.expand_dims(neigh, axis=0)
-    neigh = np.expand_dims(neigh, axis=0)
-    return neigh
-
-
-
-def preprocessing(n_igm,n_src):
-    
-    n_igm = 2.95 * 10**55 * n_igm
-    mean_n_igm = np.mean(n_igm)
-    std_n_igm = np.std(n_igm)
-    mean_n_src = np.mean(n_src)
-    std_n_src = np.std(n_src)
-
-    n_igm = (n_igm - mean_n_igm) / std_n_igm
-    n_src = (n_src - mean_n_src) / std_n_src
-    
-    n_igm = np.expand_dims(n_igm, axis=0)
-    n_igm = np.expand_dims(n_igm, axis=0)
-    n_src = np.expand_dims(n_src, axis=0)
-    n_src = np.expand_dims(n_src, axis=0)
-    
-    return n_igm, n_src
 
 
 
 def printing (loss, epoch, n_epochs, iter, n_iters):
     print ('epoch ', epoch+1,'/',n_epochs, '   iter ',iter+1, '/',n_iters, '      loss = ', torch.Tensor.detach(loss).item())
+
+
+def print_test(loss,iter,n_iters):
+    print('iter ',iter+1, '/',n_iters, '      loss = ', torch.Tensor.detach(loss).item())
     
 
 
@@ -59,54 +24,99 @@ def printing (loss, epoch, n_epochs, iter, n_iters):
 # Main file
 
 if __name__ == '__main__':
-    
+
     # DATA IMPORT 
-    
-    z = 8.397
-    r = 24
-    epochs = 10
-    
-    n_igm = np.load('../dataset/rho_z%.3f.npy' %z)  # density of intergalactic medium\n"
-    n_src = np.load('../dataset/nsrc_z%.3f.npy' %z) # number of sources per volume\n"
-    xi = np.load('../dataset/xHII_z%.3f.npy' %z) # ionization fraction"
-    
-    
-    dims = n_igm.shape
-    
-    # PREPROCESSING
-    n_igm, n_src = preprocessing(n_igm, n_src)
+    # path to preprocessed dataset
+    path_preproc = 'cubes/'
+
+    # number of data to use in the training and validation
+    dataset_size = 3000
+
+    # load and prepare dataset with shape (dataset_size, input_type, channel_size, xdim, ydim, zdim)
+    X = np.zeros((dataset_size, 2, 1, 49, 49, 49))
+    for i in range(dataset_size):
+        n_src = np.load('%sn_src_i%d.npy' % (path_preproc, i))
+        n_igm = np.load('%sn_igm_i%d.npy' % (path_preproc, i))
+        X[i, 0] = n_src[np.newaxis, ...]
+        X[i, 1] = n_igm[np.newaxis, ...]
+    y = np.loadtxt('%sxi_flatten.txt' % path_preproc)[:dataset_size]
+
+    # split dataset into trianing (80%) and validation set (test_size = 20%)
+    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=2021)
+
+    # convert numpy array to torch tensor
+    X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :, :, :, :]), torch.Tensor(X_train[:, 1, :, :, :, :])
+    X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :, :, :, :]), torch.Tensor(X_valid[:, 1, :, :, :, :])
+
+    y_train = torch.Tensor(y_train)
+    y_valid = torch.Tensor(y_valid)
+
+
+    # create pytorch dataset
+    train_dataset = TensorDataset(X_train_src, X_train_igm, y_train)
+    valid_dataset = TensorDataset(X_valid_src, X_valid_igm, y_valid)
+
+    # create data loader to use in epoch for loop, for a batch of size 32
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=True)
     
     
     # CNN CREATION
     net = CNN.CNN()
-    optimizer = optim.Adam(net.parameters(), lr=0.1)
+    optimizer = optim.Adam(net.parameters(), lr=0.01)  #I suggest to try the performance with different learning rate : 0.1 , 1e-2 , 1e-3. However, remember that Adam is an adaptive method
     
-    
-    
-    
-    
+
     # TRAINING
+    epochs = 5
     
-    random.seed(2021)
-    total_points = list(itertools.product(range(dims[0]),range(dims[1]),range(dims[2]))) # cartesian product
-    
-    
+    print("#############  TRAINING OF THE MODEL #############")
     for epoch in range(epochs):
-        
-        batch = random.sample(total_points, k = 3000)
-        batch_tr = batch[:2500]
-        batch_te = batch[2500:]
-      
-        for iter,P in enumerate(batch_tr):
-                
-            n_igm_nbh = torch.tensor(get_neighborhood(n_igm, P, r)).float()
-            n_src_nbh = torch.tensor(get_neighborhood(n_src, P, r)).float()
-            
+        net.train()   #Not fundamental, just to distinguish net.train() and net.eval() when we do validation
+        for iter,(X_train_src,X_train_igm,y_train) in enumerate(train_loader):
+
             loss_fn = torch.nn.MSELoss()
             optimizer.zero_grad()  # set the gradients to 0
-            output= net(n_igm_nbh, n_src_nbh) # forward
-            estimation = torch.tensor([xi[P]]).float()
-            loss = loss_fn(output, estimation)  # compute loss function
-            printing (loss, epoch, epochs, iter, 2500)
+            output= net(X_train_igm, X_train_src) # forward
+            loss = loss_fn(output, y_train)  # compute loss function
+            printing(loss, epoch, epochs, iter, 75)    #the number of iterations should be training_set_size/batch_size ---> 3000*0.8/32
             loss.backward()  # backpropagation
             optimizer.step()
+
+
+    #VALIDATION
+    print("############# VALIDATION OF OUR MODEL #############")
+    loss_test = []
+    net.eval()  #It is necessary in order to do validation
+    for iter,(X_test_src,X_test_igm,y_test) in enumerate(valid_loader):
+        # Evaluate the network (forward pass)
+        loss_fn = torch.nn.MSELoss()
+        prediction = net(X_test_igm,X_test_src)
+        loss = loss_fn(prediction,y_test)
+        loss_test.append(loss.item())
+        print_test(loss,iter,600)
+
+
+
+    #Saving the model 
+    PATH = 'model.txt'
+    torch.save(net.state_dict(), PATH)
+    print("Model saved")
+
+
+
+    ''' 
+    #To reload the model 
+    net = CNN.CNN()
+    net.load_state_dict(torch.load(PATH))
+    '''
+
+
+
+
+
+
+
+
+
+
+
