@@ -79,6 +79,7 @@ class CNN(nn.Module):
         self.dense_5 = nn.Linear(in_features=16, out_features=8)
         self.dense_6 = nn.Linear(in_features=8, out_features=4)
         self.dense_7 = nn.Linear(in_features=4, out_features=1)
+        self.final_activation = nn.Sigmoid()
 
     def forward(self, x1, x2):
         
@@ -117,9 +118,9 @@ class CNN(nn.Module):
         out2 = self.average_pooling_3d_17(out2)
         
         # CENTRAL BRANCH
-        
         out = torch.cat((out1, out2), dim = 1) # concatenating the tensors along the channel dim
-        out = torch.flatten(out)
+        out = torch.flatten(out,1)
+
 
         out = self.dropout(out)
 
@@ -146,5 +147,9 @@ class CNN(nn.Module):
         out = self.dense_5(out)
         out = self.dense_6(out)
         out = self.dense_7(out)
+        out = self.final_activation(out)
+
+        out = torch.flatten(out)   #In this way at the end we obtain a tensor of size torch.Size([batch_size]) instead of torch.Size([batch_size,1]), for a clean comparison with the y_train
+
         
         return out
