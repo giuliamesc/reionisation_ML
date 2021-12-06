@@ -6,6 +6,7 @@ from torch import optim
 import random
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import train_test_split
+import pickle
 
 
 
@@ -68,12 +69,20 @@ if __name__ == '__main__':
 
     # TRAINING
     epochs = 5
-    
+
+
+    #If you want to test a single batch (then also comment the inner for loop) and if you want to test a single data put batch_size = 1
+    #X_train_src,X_train_igm,y_train = next(iter(train_loader))
+    #X_test_src,X_test_igm,y_test = next(iter(valid_loader))
+    #iter = 1
+
+
+
     print("#############  TRAINING OF THE MODEL #############")
     for epoch in range(epochs):
+
         net.train()   #Not fundamental, just to distinguish net.train() and net.eval() when we do validation
         for iter,(X_train_src,X_train_igm,y_train) in enumerate(train_loader):
-
             loss_fn = torch.nn.MSELoss()
             optimizer.zero_grad()  # set the gradients to 0
             output= net(X_train_igm, X_train_src) # forward
@@ -95,6 +104,10 @@ if __name__ == '__main__':
         loss_test.append(loss.item())
         print_test(loss,iter,600)
 
+    #Saving the test losses
+    pickle.dump({"test_loss": loss_test}, open(".\output", "wb"))
+    print("Test Losses Saved")
+
 
 
     #Saving the model 
@@ -104,12 +117,20 @@ if __name__ == '__main__':
 
 
 
-    ''' 
+
+''' 
     #To reload the model 
     net = CNN.CNN()
     net.load_state_dict(torch.load(PATH))
-    '''
+'''
 
+
+
+'''
+    #Loading the test losses 
+    data = pickle.load(open(".\output", "rb"))
+    print(data["test_loss"])
+'''
 
 
 
