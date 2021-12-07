@@ -8,17 +8,27 @@ from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import train_test_split
 import pickle
 import gc
+import time
 
 
 
 
 
-def printing (loss, epoch, n_epochs, iter, n_iters):
-    print ('epoch ', epoch+1,'/',n_epochs, '   iter ',iter+1, '/',n_iters, '      loss = ', torch.Tensor.detach(loss).item())
+def print_train (loss, epoch, n_epochs, iter, n_iters, d_time, D_time):
+    time_ratio = float(n_iters - iter - 1)/((iter+1))
+    remaining_time = D_time * time_ratio
+    print ('epoch ', epoch+1,'/',n_epochs, ' |   iter ',iter+1, '/',n_iters, ' |  loss = ', format(torch.Tensor.detach(loss).item(), ".4f"), ' |   time: ', format(d_time, ".3f"), '  |   to end of epoch: ', format(remaining_time, ".3f"))
 
 
-def print_test(loss,iter,n_iters):
-    print('iter ',iter+1, '/',n_iters, '      loss = ', torch.Tensor.detach(loss).item())
+def print_test(loss, epoch, n_epochs, iter, n_iters):
+    print('epoch ', epoch+1,'/',n_epochs, ' |   iter ',iter+1, '/',n_iters, ' |  loss = ', format(torch.Tensor.detach(loss).item(), ".4f"))
+    
+    
+def clock(curr_time, init_time): # to compute iteration time
+    time_next = time.perf_counter()
+    d_time = time_next - curr_time # delta-time between two iterations
+    D_time = time_next - init_time # delta-time from the beginning
+    return time_next, d_time, D_time
     
 
 
@@ -26,6 +36,8 @@ def print_test(loss,iter,n_iters):
 # Main file
 
 if __name__ == '__main__':
+    
+    gc.collect()
 
     # DATA IMPORT 
     # path to preprocessed dataset
@@ -87,11 +99,18 @@ if __name__ == '__main__':
     #X_train_src,X_train_igm,y_train = next(iter(train_loader))
     #X_test_src,X_test_igm,y_test = next(iter(valid_loader))
     #iter = 1
+    
+    
+    prev_loss = 10**2 #  high initial value
+    all_losses = [] # will contain all the losses of the different epochs
+    
 
-
-
-    print("#############  TRAINING OF THE MODEL #############")
     for epoch in range(epochs):
+        
+        print ('          TRAINING     epoch ',epoch+1,'/', epochs,'\n')
+        
+        init_time = time.perf_counter()
+        curr_time = init_time
 
         net.train()   #Not fundamental, just to distinguish net.train() and net.eval() when we do validation
         for iter,(X_train_src,X_train_igm,y_train) in enumerate(train_loader):
@@ -99,34 +118,40 @@ if __name__ == '__main__':
             optimizer.zero_grad()  # set the gradients to 0
             output= net(X_train_igm, X_train_src) # forward
             loss = loss_fn(output, y_train)  # compute loss function
-            printing(loss, epoch, epochs, iter, 75)    #the number of iterations should be training_set_size/batch_size ---> 3000*0.8/32
             loss.backward()  # backpropagation
             optimizer.step()
+            
+            curr_time, d_time, D_time = clock(curr_time, init_time)
+            print_train(loss, epoch, epochs, iter, 75, d_time, D_time)    #the number of iterations should be training_set_size/batch_size ---> 3000*0.8/32
 
 
-    #VALIDATION
-    print("############# VALIDATION OF OUR MODEL #############")
-    loss_test = []
-    net.eval()  #It is necessary in order to do validation
-    for iter,(X_test_src,X_test_igm,y_test) in enumerate(valid_loader):
-        # Evaluate the network (forward pass)
-        loss_fn = torch.nn.MSELoss()
-        prediction = net(X_test_igm,X_test_src)
-        loss = loss_fn(prediction,y_test)
-        loss_test.append(loss.item())
-        print_test(loss,iter,600)
-
-    #Saving the test losses
-    pickle.dump({"test_loss": loss_test}, open(".\output", "wb"))
-    print("Test Losses Saved")
-
-
-
-    #Saving the model 
-    PATH = 'model.txt'
-    torch.save(net.state_dict(), PATH)
-    print("Model saved")
-
+        print('           TESTING     epoch ',epoch+1,'/', epochs,'\n')
+        
+        loss_test = []
+        net.eval()  #It is necessary in order to do validation
+        for iter,(X_test_src,X_test_igm,y_test) in enumerate(valid_loader):
+            # Evaluate the network (forward pass)
+            loss_fn = torch.nn.MSELoss()
+            prediction = net(X_test_igm,X_test_src)
+            loss = loss_fn(prediction,y_test)
+            loss_test.append(loss.item())
+            print_test(loss, epoch, epochs, iter, 19)
+        
+        
+        # COMPARISONS AND SAVINGS
+        
+        loss_test = loss_test.mean()
+        all_losses.append(loss_test)
+        
+        pickle.dump({"test_loss": all_losses}, open(".\output", "wb")) # it should overwrite the previous file
+        print('\n Test loss of epoch ', epoch +1,' saved')
+        
+        if (loss_test < prev_loss):
+            prev_loss = loss_test
+            PATH = 'model_%d,txt' % iter
+            torch.save(net.state_dict(), PATH)
+            print ('Model of epoch ', epoch+1,' saved')
+            
 
 
 
