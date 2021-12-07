@@ -7,6 +7,7 @@ import random
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import train_test_split
 import pickle
+import gc
 
 
 
@@ -28,7 +29,7 @@ if __name__ == '__main__':
 
     # DATA IMPORT 
     # path to preprocessed dataset
-    path_preproc = 'cubes/'
+    path_preproc = '../cubes/'
 
     # number of data to use in the training and validation
     dataset_size = 3000
@@ -45,10 +46,17 @@ if __name__ == '__main__':
     # split dataset into trianing (80%) and validation set (test_size = 20%)
     X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=2021)
 
+    del X
+    gc.collect()
+    
     # convert numpy array to torch tensor
     X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :, :, :, :]), torch.Tensor(X_train[:, 1, :, :, :, :])
     X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :, :, :, :]), torch.Tensor(X_valid[:, 1, :, :, :, :])
 
+    del X_train
+    del X_valid
+    gc.collect()
+    
     y_train = torch.Tensor(y_train)
     y_valid = torch.Tensor(y_valid)
 
@@ -60,6 +68,10 @@ if __name__ == '__main__':
     # create data loader to use in epoch for loop, for a batch of size 32
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=True)
+    
+    del train_dataset
+    del valid_dataset
+    gc.collect()
     
     
     # CNN CREATION
