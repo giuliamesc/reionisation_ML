@@ -22,21 +22,21 @@ def print_train (loss, epoch, n_epochs, iter, n_iters, d_time, D_time):
 
 def print_test(loss, epoch, n_epochs, iter, n_iters):
     print('epoch ', epoch+1,'/',n_epochs, ' |   iter ',iter+1, '/',n_iters, ' |  loss = ', format(torch.Tensor.detach(loss).item(), ".4f"))
-    
-    
+
+
 def clock(curr_time, init_time): # to compute iteration time
     time_next = time.perf_counter()
     d_time = time_next - curr_time # delta-time between two iterations
     D_time = time_next - init_time # delta-time from the beginning
     return time_next, d_time, D_time
-    
 
 
-    
+
+
 # Main file
 
 if __name__ == '__main__':
-    
+
     gc.collect()
 
     # DATA IMPORT 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     del X
     gc.collect()
-    
+
     # convert numpy array to torch tensor
     X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :, :, :, :]), torch.Tensor(X_train[:, 1, :, :, :, :])
     X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :, :, :, :]), torch.Tensor(X_valid[:, 1, :, :, :, :])
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     del X_train
     del X_valid
     gc.collect()
-    
+
     y_train = torch.Tensor(y_train)
     y_valid = torch.Tensor(y_valid)
 
@@ -80,35 +80,48 @@ if __name__ == '__main__':
     # create data loader to use in epoch for loop, for a batch of size 32
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=True)
-    
+
     del train_dataset
     del valid_dataset
     gc.collect()
-    
-    
+
+
     # CNN CREATION
     net = CNN.CNN()
     optimizer = optim.Adam(net.parameters(), lr=0.01)  #I suggest to try the performance with different learning rate : 0.1 , 1e-2 , 1e-3. However, remember that Adam is an adaptive method
-    
+    #PATH = '\model\last_model.txt'
+    #net.load_state_dict(torch.load(PATH))
 
     # TRAINING
+    #current_epoch = pickle.load(open(".\current_epoch","rb"))   #It is a python library
+    #current_epoch = current_epoch["current_epoch"]
     epochs = 5
+    #final_epoch = current_epoch + epochs
+    pickle.dump({"current_epoch": epochs}, open(".\current_epoch", "wb"))
 
 
     #If you want to test a single batch (then also comment the inner for loop) and if you want to test a single data put batch_size = 1
     #X_train_src,X_train_igm,y_train = next(iter(train_loader))
     #X_test_src,X_test_igm,y_test = next(iter(valid_loader))
-    #iter = 1
-    
-    
-    prev_loss = 10**2 #  high initial value
-    all_losses = [] # will contain all the losses of the different epochs
-    
+    #iter = 0
 
-    for epoch in range(epochs):
-        
+
+    prev_loss = 10**2 #  high initial value
+    #prev_loss = pickle.load(open(".\min_loss","rb"))     # To load the min loss of the previous simulation
+    #prev_loss = prev_loss["prev_loss"]
+
+    all_losses = [] # will contain all the losses of the different epochs
+    #all_losses = pickle.load(open(".\output", "rb"))  #To load the vector of losses
+    #all_losses = all_losses["test_loss"]
+
+
+
+
+
+    for epoch in range(epochs):         #for epoch in range(current_epoch,final_epoch)
+
         print ('          TRAINING     epoch ',epoch+1,'/', epochs,'\n')
-        
+
         init_time = time.perf_counter()
         curr_time = init_time
 
@@ -120,13 +133,13 @@ if __name__ == '__main__':
             loss = loss_fn(output, y_train)  # compute loss function
             loss.backward()  # backpropagation
             optimizer.step()
-            
+
             curr_time, d_time, D_time = clock(curr_time, init_time)
             print_train(loss, epoch, epochs, iter, 75, d_time, D_time)    #the number of iterations should be training_set_size/batch_size ---> 3000*0.8/32
 
 
         print('           TESTING     epoch ',epoch+1,'/', epochs,'\n')
-        
+
         loss_test = []
         net.eval()  #It is necessary in order to do validation
         for iter,(X_test_src,X_test_igm,y_test) in enumerate(valid_loader):
@@ -136,23 +149,29 @@ if __name__ == '__main__':
             loss = loss_fn(prediction,y_test)
             loss_test.append(loss.item())
             print_test(loss, epoch, epochs, iter, 19)
-        
-        
+
+
         # COMPARISONS AND SAVINGS
-        
-        loss_test = loss_test.mean()
+
+        loss_test = np.mean(loss_test)
         all_losses.append(loss_test)
-        
+
         pickle.dump({"test_loss": all_losses}, open(".\output", "wb")) # it should overwrite the previous file
         print('\n Test loss of epoch ', epoch +1,' saved')
-        
+
         if (loss_test < prev_loss):
             prev_loss = loss_test
-            PATH = 'model_%d,txt' % iter
+            pickle.dump({"prev_loss" : prev_loss}, open(".\min_loss","wb"))  #We need also to save the minimum value of the test loss we achieved
+            PATH = '\model\model_%d.txt' % epoch
             torch.save(net.state_dict(), PATH)
             print ('Model of epoch ', epoch+1,' saved')
-            
 
+
+
+    # Saving the last model used
+    PATH = '\model\last_model.txt'
+    torch.save(net.state_dict(), PATH)
+    print('Last Model saved')
 
 
 ''' 
