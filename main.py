@@ -1,17 +1,14 @@
 import numpy as np
 import CNN
 import torch
-from torch import nn
 from torch import optim
-import random
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import train_test_split
 import pickle
 import gc
 import time
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-import ignite
-from ignite.contrib.metrics import regression as ign
+from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 
 
@@ -55,8 +52,8 @@ if __name__ == '__main__':
 
     # DATA IMPORT 
     # path to preprocessed dataset
-    #path_preproc = '../cubes/'
-    path_preproc = 'cubes/' # according to your choice of storage!
+    path_preproc = '../cubes/'
+    #path_preproc = 'cubes/' # according to your choice of storage!
     # number of data to use in the training and validation
     dataset_size = 3000
 
@@ -152,7 +149,7 @@ if __name__ == '__main__':
             output= net(X_train_igm, X_train_src) # forward
             loss = loss_fn(output, y_train)  # compute loss function
             loss_train.append(loss.item()) # storing the training losses
-            R2 = ign.R2Score(output).compute() # add second input if we use GPU!
+            R2 = r2_score(output.detach(), y_train.detach())
             loss.backward()  # backpropagation
             optimizer.step()
 
@@ -170,7 +167,7 @@ if __name__ == '__main__':
             # Evaluate the network (forward pass)
             loss_fn = torch.nn.MSELoss()
             prediction = net(X_test_igm,X_test_src)
-            R2 = ign.R2Score(prediction).compute() # add second input if we use GPU!
+            R2 = r2_score(output.detach(), y_train.detach())
             loss = loss_fn(prediction,y_test)
             loss_test.append(loss.item())
             print_test(loss, epoch, epochs, iter, test_step, R2)
@@ -187,22 +184,37 @@ if __name__ == '__main__':
 
         if (loss_test < prev_loss):
             prev_loss = loss_test
-            pickle.dump({"prev_loss" : prev_loss}, open(".\min_loss","wb"))  #We need also to save the minimum value of the test loss we achieved
             PATH = '\model\model_%d.txt' % epoch
-            torch.save(net.state_dict(), PATH)
+            torch.save({'epoch': epoch,
+                        'model_state': net.state_dict(),
+                        'optimizer_state': optimizer.state_dict(),
+                        'scheduler_state': scheduler.state_dist(),
+                        'loss': prev_loss}, PATH)
             print ('Model of epoch ', epoch+1,' saved')
 
 
-    # Saving the last model used
-    PATH = '\model\last_model.txt'
-    torch.save(net.state_dict(), PATH)
-    print('Last Model saved')
+        # Saving the last model used
+        PATH = '\model\last_model.txt'
+        torch.save({'epoch': epoch,
+                    'model_state': net.state_dict(),
+                    'optimizer_state': optimizer.state_dict(),
+                    'scheduler_state': scheduler.state_dist(),
+                    'loss': prev_loss}, PATH)
+        print('Last model saved')
+
+
 
 
 ''' 
-    #To reload the model 
-    net = CNN.CNN()
-    net.load_state_dict(torch.load(PATH))
+    #To reload the model (at every epoch or last)
+    net = ...
+    optimizer = ...
+    scheduler = ...
+    checkpoint = torch.load(PATH)
+    net.load_state_dict(checkpoint['model_state'])
+    optimizer.load_state_dict(checkpoint['optimizer_state'])
+    scheduler.load_state_dict(checkpoint['scheduler_state'])
+    resume_epoch = checkpoint['epoch']
 '''
 
 
