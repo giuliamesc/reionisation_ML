@@ -209,7 +209,7 @@ if __name__ == '__main__':
             torch.save({'epoch': epoch,
                         'model_state': net.state_dict(),
                         'optimizer_state': optimizer.state_dict(),
-                        'scheduler_state': scheduler.state_dist(),
+                        'scheduler_state': scheduler.state_dict(),
                         'loss': prev_loss}, PATH)
             print ('Model of epoch ', epoch+1,' saved')
 
