@@ -167,7 +167,7 @@ if __name__ == '__main__':
             # Evaluate the network (forward pass)
             loss_fn = torch.nn.MSELoss()
             prediction = net(X_test_igm,X_test_src)
-            R2 = r2_score(output.detach(), y_train.detach())
+            R2 = r2_score(prediction.detach(), y_test.detach())
             loss = loss_fn(prediction,y_test)
             loss_test.append(loss.item())
             print_test(loss, epoch, epochs, iter, test_step, R2)
