@@ -114,7 +114,9 @@ if __name__ == '__main__':
     #all_losses = pickle.load(open(".\output", "rb"))  #To load the vector of losses
     #all_losses = all_losses["test_loss"]
 
-
+    all_train_losses = [] # will contain all the losses of the different epochs
+    #all_losses = pickle.load(open(".\output", "rb"))  #To load the vector of losses
+    #all_losses = all_losses["test_loss"]
 
 
 
@@ -124,19 +126,22 @@ if __name__ == '__main__':
 
         init_time = time.perf_counter()
         curr_time = init_time
-
+        loss_train = []
         net.train()   #Not fundamental, just to distinguish net.train() and net.eval() when we do validation
         for iter,(X_train_src,X_train_igm,y_train) in enumerate(train_loader):
             loss_fn = torch.nn.MSELoss()
             optimizer.zero_grad()  # set the gradients to 0
             output= net(X_train_igm, X_train_src) # forward
             loss = loss_fn(output, y_train)  # compute loss function
+            loss_train.append(loss.item()) # storing the training losses
             loss.backward()  # backpropagation
             optimizer.step()
 
             curr_time, d_time, D_time = clock(curr_time, init_time)
             print_train(loss, epoch, epochs, iter, 75, d_time, D_time)    #the number of iterations should be training_set_size/batch_size ---> 3000*0.8/32
-
+            
+        loss_train = np.mean(loss_train)
+        all_train_losses.append(loss_train)
 
         print('           TESTING     epoch ',epoch+1,'/', epochs,'\n')
 
