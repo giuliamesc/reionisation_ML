@@ -167,7 +167,7 @@ if __name__ == '__main__':
             output= net(X_train_igm, X_train_src) # forward
             loss = loss_fn(output, y_train)  # compute loss function
             loss_train.append(loss.item()) # storing the training losses
-            R2 = r2_score(output.detach(), y_train.detach())
+            R2 = r2_score(y_train.detach(), output.detach())
             loss.backward()  # backpropagation
             optimizer.step()
 
@@ -188,7 +188,7 @@ if __name__ == '__main__':
             # Evaluate the network (forward pass)
             loss_fn = torch.nn.MSELoss()
             prediction = net(X_test_igm,X_test_src)
-            R2 = r2_score(prediction.detach(), y_test.detach())
+            R2 = r2_score(y_test.detach(), prediction.detach())
             loss = loss_fn(prediction,y_test)
             loss_test.append(loss.item())
             print_test(loss, epoch, epochs, iter, test_step, R2)
@@ -219,7 +219,7 @@ if __name__ == '__main__':
         torch.save({'epoch': epoch,
                     'model_state': net.state_dict(),
                     'optimizer_state': optimizer.state_dict(),
-                    'scheduler_state': scheduler.state_dist(),
+                    'scheduler_state': scheduler.state_dict(),
                     'loss': prev_loss}, PATH)
         print('Last model saved')
 
