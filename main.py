@@ -9,19 +9,21 @@ from sklearn.model_selection import train_test_split
 import pickle
 import gc
 import time
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+import ignite
+from ignite.contrib.metrics import regression as ign
+import matplotlib.pyplot as plt
 
 
 
-
-
-def print_train (loss, epoch, n_epochs, iter, n_iters, d_time, D_time):
+def print_train (loss, epoch, n_epochs, iter, n_iters, d_time, D_time, R2):
     time_ratio = float(n_iters - iter - 1)/((iter+1))
     remaining_time = D_time * time_ratio
-    print ('epoch ', epoch+1,'/',n_epochs, ' |   iter ',iter+1, '/',n_iters, ' |  loss = ', format(torch.Tensor.detach(loss).item(), ".4f"), ' |   time: ', format(d_time, ".3f"), '  |   to end of epoch: ', format(remaining_time, ".3f"))
+    print ('epoch ', epoch+1,'/',n_epochs, ' |   iter ',iter+1, '/',n_iters, ' |  loss = ', format(torch.Tensor.detach(loss).item(), ".4f"), '|  R2 = ', format(R2, ".4f"), ' |   time: ', format(d_time, ".3f"), '  |   to end of epoch: ', format(remaining_time, ".3f"))
 
 
-def print_test(loss, epoch, n_epochs, iter, n_iters):
-    print('epoch ', epoch+1,'/',n_epochs, ' |   iter ',iter+1, '/',n_iters, ' |  loss = ', format(torch.Tensor.detach(loss).item(), ".4f"))
+def print_test(loss, epoch, n_epochs, iter, n_iters, R2):
+    print('epoch ', epoch+1,'/',n_epochs, ' |   iter ',iter+1, '/',n_iters, ' |  loss = ', format(torch.Tensor.detach(loss).item(), ".4f"), '|  R2 = ', format(R2, ".4f"))
 
 
 def clock(curr_time, init_time): # to compute iteration time
@@ -30,7 +32,19 @@ def clock(curr_time, init_time): # to compute iteration time
     D_time = time_next - init_time # delta-time from the beginning
     return time_next, d_time, D_time
 
-
+def plot_losses(epochs, loss_tr, loss_te):
+    plt.plot(epochs, loss_tr, 'r') # training losses
+    plt.plot(epochs, loss_te, 'g') # test losses
+    plt.title('Losses trends')
+    plt.show()
+    
+def correlation_plot(x_pred, x_true):
+    plt.plot(x_true, x_true, 'r') # y = x
+    plt.plot(x_true, x_pred, 'b') # our actual prediction
+    sigma = np.std(x_pred)
+    plt.plot(x_true, x_pred + sigma, 'r-')
+    plt.plot(x_true, x_pred - sigma, 'r-')
+    
 
 
 # Main file
@@ -41,8 +55,8 @@ if __name__ == '__main__':
 
     # DATA IMPORT 
     # path to preprocessed dataset
-    path_preproc = '../cubes/'
-
+    #path_preproc = '../cubes/'
+    path_preproc = 'cubes/' # according to your choice of storage!
     # number of data to use in the training and validation
     dataset_size = 3000
 
@@ -58,6 +72,9 @@ if __name__ == '__main__':
     # split dataset into trianing (80%) and validation set (test_size = 20%)
     X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=2021)
 
+    train_step = X_train.shape[0]//32 # // returns an approximation to integer of the division
+    test_step = X_valid.shape[0]//32
+    
     del X
     gc.collect()
 
@@ -88,7 +105,8 @@ if __name__ == '__main__':
 
     # CNN CREATION
     net = CNN.CNN()
-    optimizer = optim.Adam(net.parameters(), lr=0.01)  #I suggest to try the performance with different learning rate : 0.1 , 1e-2 , 1e-3. However, remember that Adam is an adaptive method
+    optimizer = optim.Adam(net.parameters(), lr=1e-3)  #I suggest to try the performance with different learning rate : 0.1 , 1e-2 , 1e-3. However, remember that Adam is an adaptive method
+    scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-7)
     #PATH = '\model\last_model.txt'
     #net.load_state_dict(torch.load(PATH))
 
@@ -134,14 +152,15 @@ if __name__ == '__main__':
             output= net(X_train_igm, X_train_src) # forward
             loss = loss_fn(output, y_train)  # compute loss function
             loss_train.append(loss.item()) # storing the training losses
+            R2 = ign.R2Score(output).compute() # add second input if we use GPU!
             loss.backward()  # backpropagation
             optimizer.step()
 
             curr_time, d_time, D_time = clock(curr_time, init_time)
-            print_train(loss, epoch, epochs, iter, 75, d_time, D_time)    #the number of iterations should be training_set_size/batch_size ---> 3000*0.8/32
+            print_train(loss, epoch, epochs, iter, train_step, d_time, D_time, R2)    #the number of iterations should be training_set_size/batch_size ---> 3000*0.8/32
             
         loss_train = np.mean(loss_train)
-        all_train_losses.append(loss_train)
+        all_train_losses.append(loss_train) # storage of the training losses
 
         print('           TESTING     epoch ',epoch+1,'/', epochs,'\n')
 
@@ -151,14 +170,16 @@ if __name__ == '__main__':
             # Evaluate the network (forward pass)
             loss_fn = torch.nn.MSELoss()
             prediction = net(X_test_igm,X_test_src)
+            R2 = ign.R2Score(prediction).compute() # add second input if we use GPU!
             loss = loss_fn(prediction,y_test)
             loss_test.append(loss.item())
-            print_test(loss, epoch, epochs, iter, 19)
+            print_test(loss, epoch, epochs, iter, test_step, R2)
 
-
+    
         # COMPARISONS AND SAVINGS
 
         loss_test = np.mean(loss_test)
+        scheduler.step(loss_test)
         all_losses.append(loss_test)
 
         pickle.dump({"test_loss": all_losses}, open(".\output", "wb")) # it should overwrite the previous file
@@ -170,7 +191,6 @@ if __name__ == '__main__':
             PATH = '\model\model_%d.txt' % epoch
             torch.save(net.state_dict(), PATH)
             print ('Model of epoch ', epoch+1,' saved')
-
 
 
     # Saving the last model used
