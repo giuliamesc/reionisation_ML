@@ -98,21 +98,50 @@ if __name__ == '__main__':
     del train_dataset
     del valid_dataset
     gc.collect()
-
-
-    # CNN CREATION
-    net = CNN.CNN()
-    optimizer = optim.Adam(net.parameters(), lr=1e-3)  #I suggest to try the performance with different learning rate : 0.1 , 1e-2 , 1e-3. However, remember that Adam is an adaptive method
-    scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-7)
-    #PATH = '\model\last_model.txt'
-    #net.load_state_dict(torch.load(PATH))
-
-    # TRAINING
-    #current_epoch = pickle.load(open(".\current_epoch","rb"))   #It is a python library
-    #current_epoch = current_epoch["current_epoch"]
+    
+    
+    
+    print ('Data loading successfully completed')
+    
+    
+    ###### IMPORTANT PARAMETERS TO SET #######
     epochs = 5
-    #final_epoch = current_epoch + epochs
-    pickle.dump({"current_epoch": epochs}, open(".\current_epoch", "wb"))
+    first_run = True
+    ##########################################
+    
+    
+    
+    # INITIALIZATION (depending on first run or not)
+    
+    if (first_run == True):
+        net = CNN.CNN()
+        optimizer = optim.Adam(net.parameters(), lr=1e-3)  #I suggest to try the performance with different learning rate : 0.1 , 1e-2 , 1e-3. However, remember that Adam is an adaptive method
+        scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-7)
+        current_epoch = 0
+        final_epoch = epochs
+        prev_loss = 10**2 # high initial value
+        all_test_losses = [] # will contain all the losses of the different epochs
+        all_train_losses = [] # will contain all the losses of the different epochs
+    else:
+        PATH = '\model\last_model.txt'
+        net = ...
+        optimizer = ...
+        scheduler = ...
+        checkpoint = torch.load(PATH)
+        net.load_state_dict(checkpoint['model_state'])
+        optimizer.load_state_dict(checkpoint['optimizer_state'])
+        scheduler.load_state_dict(checkpoint['scheduler_state'])
+        current_epoch = checkpoint['epoch']
+        final_epoch = current_epoch + epochs
+        
+        prev_loss = pickle.load(open(".\min_loss","rb"))     # To load the min loss of the previous simulation
+        prev_loss = prev_loss["prev_loss"]
+        losses = pickle.load(open(".\output", "rb"))  #To load the vector of losses
+        all_test_losses = losses["test_loss"]
+        all_train_losses = losses["train_loss"]
+     
+    
+    print ('Net initialization successfully completed')
 
 
     #If you want to test a single batch (then also comment the inner for loop) and if you want to test a single data put batch_size = 1
@@ -121,21 +150,10 @@ if __name__ == '__main__':
     #iter = 0
 
 
-    prev_loss = 10**2 #  high initial value
-    #prev_loss = pickle.load(open(".\min_loss","rb"))     # To load the min loss of the previous simulation
-    #prev_loss = prev_loss["prev_loss"]
-
-    all_losses = [] # will contain all the losses of the different epochs
-    #all_losses = pickle.load(open(".\output", "rb"))  #To load the vector of losses
-    #all_losses = all_losses["test_loss"]
-
-    all_train_losses = [] # will contain all the losses of the different epochs
-    #all_losses = pickle.load(open(".\output", "rb"))  #To load the vector of losses
-    #all_losses = all_losses["test_loss"]
 
 
 
-    for epoch in range(epochs):         #for epoch in range(current_epoch,final_epoch)
+    for epoch in range(current_epoch, final_epoch):
 
         print ('          TRAINING     epoch ',epoch+1,'/', epochs,'\n')
 
@@ -158,6 +176,9 @@ if __name__ == '__main__':
             
         loss_train = np.mean(loss_train)
         all_train_losses.append(loss_train) # storage of the training losses
+        
+        pickle.dump({"train_loss": all_train_losses}, open(".\output", "wb")) # it overwrites the previous file
+        print('\n Train loss of epoch ', epoch +1,' saved')
 
         print('           TESTING     epoch ',epoch+1,'/', epochs,'\n')
 
@@ -177,9 +198,9 @@ if __name__ == '__main__':
 
         loss_test = np.mean(loss_test)
         scheduler.step(loss_test)
-        all_losses.append(loss_test)
+        all_test_losses.append(loss_test)
 
-        pickle.dump({"test_loss": all_losses}, open(".\output", "wb")) # it should overwrite the previous file
+        pickle.dump({"test_loss": all_test_losses}, open(".\output", "wb")) # it overwrites the previous file
         print('\n Test loss of epoch ', epoch +1,' saved')
 
         if (loss_test < prev_loss):
@@ -201,33 +222,6 @@ if __name__ == '__main__':
                     'scheduler_state': scheduler.state_dist(),
                     'loss': prev_loss}, PATH)
         print('Last model saved')
-
-
-
-
-''' 
-    #To reload the model (at every epoch or last)
-    net = ...
-    optimizer = ...
-    scheduler = ...
-    checkpoint = torch.load(PATH)
-    net.load_state_dict(checkpoint['model_state'])
-    optimizer.load_state_dict(checkpoint['optimizer_state'])
-    scheduler.load_state_dict(checkpoint['scheduler_state'])
-    resume_epoch = checkpoint['epoch']
-'''
-
-
-
-'''
-    #Loading the test losses 
-    data = pickle.load(open(".\output", "rb"))
-    print(data["test_loss"])
-'''
-
-
-
-
 
 
 
