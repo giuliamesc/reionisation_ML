@@ -105,7 +105,7 @@ if __name__ == '__main__':
     
     
     ###### IMPORTANT PARAMETERS TO SET #######
-    epochs = 5
+    epochs = 8
     first_run = True
     ##########################################
     
@@ -115,30 +115,38 @@ if __name__ == '__main__':
     
     if (first_run == True):
         net = CNN.CNN()
-        optimizer = optim.Adam(net.parameters(), lr=1e-3)  #I suggest to try the performance with different learning rate : 0.1 , 1e-2 , 1e-3. However, remember that Adam is an adaptive method
+        optimizer = optim.Adam(net.parameters(), lr=1e-3)  #Adam is an adaptive learning rate method
         scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-7)
         current_epoch = 0
         final_epoch = epochs
         prev_loss = 10**2 # high initial value
-        all_test_losses = [] # will contain all the losses of the different epochs
-        all_train_losses = [] # will contain all the losses of the different epochs
+        all_test_losses = [] # will contain all the test losses of the different epochs
+        all_train_losses = [] # will contain all the train losses of the different epochs
+        all_R2_train = []
+        all_R2_test = []
     else:
-        PATH = '\model\last_model.txt'
-        net = ...
-        optimizer = ...
-        scheduler = ...
+        #Resume the training
+        PATH = '.\model\last_model.pt'
+        net = CNN.CNN()
+        optimizer = optim.Adam(net.parameters(), lr=1e-3)
+        scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-7)
         checkpoint = torch.load(PATH)
         net.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
-        current_epoch = checkpoint['epoch']
+        current_epoch = checkpoint['epoch'] + 1   #Because we save the last epoch done, so we have to start from the next one
+        prev_loss = checkpoint['loss']
         final_epoch = current_epoch + epochs
-        
-        prev_loss = pickle.load(open(".\min_loss","rb"))     # To load the min loss of the previous simulation
-        prev_loss = prev_loss["prev_loss"]
-        losses = pickle.load(open(".\output", "rb"))  #To load the vector of losses
-        all_test_losses = losses["test_loss"]
-        all_train_losses = losses["train_loss"]
+
+        train_losses = pickle.load(open(".\output_train", "rb"))  #To load the vector of train losses
+        test_losses = pickle.load(open(".\output_test", "rb"))    # To load the vector of test losses
+        all_test_losses = test_losses["test_loss"]
+        all_train_losses = train_losses["train_loss"]
+        #Loading R2 lists of train and test
+        R2_train = pickle.load(open(".\R2_train_list","rb"))
+        R2_test = pickle.load(open(".\R2_test_list", "rb"))
+        all_R2_train = R2_train["R2_train"]
+        all_R2_test = R2_test["R2_test"]
      
     
     print ('Net initialization successfully completed')
@@ -160,6 +168,7 @@ if __name__ == '__main__':
         init_time = time.perf_counter()
         curr_time = init_time
         loss_train = []
+        R2_train = []
         net.train()   #Not fundamental, just to distinguish net.train() and net.eval() when we do validation
         for iter,(X_train_src,X_train_igm,y_train) in enumerate(train_loader):
             loss_fn = torch.nn.MSELoss()
@@ -167,7 +176,8 @@ if __name__ == '__main__':
             output= net(X_train_igm, X_train_src) # forward
             loss = loss_fn(output, y_train)  # compute loss function
             loss_train.append(loss.item()) # storing the training losses
-            R2 = r2_score(y_train.detach(), output.detach())
+            R2 = r2_score(y_train.detach(),output.detach())
+            R2_train.append(R2)
             loss.backward()  # backpropagation
             optimizer.step()
 
@@ -176,19 +186,29 @@ if __name__ == '__main__':
             
         loss_train = np.mean(loss_train)
         all_train_losses.append(loss_train) # storage of the training losses
+
+        R2_train = np.mean(R2_train)
+        all_R2_train.append(R2_train)
+
         
-        pickle.dump({"train_loss": all_train_losses}, open(".\output", "wb")) # it overwrites the previous file
-        print('\n Train loss of epoch ', epoch +1,' saved')
+        pickle.dump({"train_loss": all_train_losses}, open(".\output_train", "wb")) # it overwrites the previous file
+        print('\n')
+        print('Train loss of epoch ', epoch +1,' saved')
+
+        pickle.dump({"R2_train": all_R2_train}, open(".\R2_train_list", "wb"))  # it overwrites the previous file
+        print('R2 Train of epoch ', epoch + 1, ' saved')
 
         print('           TESTING     epoch ',epoch+1,'/', epochs,'\n')
 
         loss_test = []
+        R2_test = []
         net.eval()  #It is necessary in order to do validation
         for iter,(X_test_src,X_test_igm,y_test) in enumerate(valid_loader):
             # Evaluate the network (forward pass)
             loss_fn = torch.nn.MSELoss()
             prediction = net(X_test_igm,X_test_src)
-            R2 = r2_score(y_test.detach(), prediction.detach())
+            R2 = r2_score(y_test.detach(),prediction.detach())
+            R2_test.append(R2)
             loss = loss_fn(prediction,y_test)
             loss_test.append(loss.item())
             print_test(loss, epoch, epochs, iter, test_step, R2)
@@ -200,12 +220,19 @@ if __name__ == '__main__':
         scheduler.step(loss_test)
         all_test_losses.append(loss_test)
 
-        pickle.dump({"test_loss": all_test_losses}, open(".\output", "wb")) # it overwrites the previous file
-        print('\n Test loss of epoch ', epoch +1,' saved')
+        R2_test = np.mean(R2_test)
+        all_R2_test.append(R2_test)
+
+        pickle.dump({"test_loss": all_test_losses}, open(".\output_test", "wb")) # it overwrites the previous file
+        print('\n')
+        print('Test loss of epoch ', epoch +1,' saved')
+
+        pickle.dump({"R2_test": all_R2_test}, open(".\R2_test_list", "wb"))  # it overwrites the previous file
+        print('R2 Test of epoch ', epoch + 1, ' saved')
 
         if (loss_test < prev_loss):
             prev_loss = loss_test
-            PATH = '\model\model_%d.txt' % epoch
+            PATH = '.\model\model_%d.pt' % epoch
             torch.save({'epoch': epoch,
                         'model_state': net.state_dict(),
                         'optimizer_state': optimizer.state_dict(),
@@ -214,15 +241,16 @@ if __name__ == '__main__':
             print ('Model of epoch ', epoch+1,' saved')
 
 
-        # Saving the last model used
-        PATH = '\model\last_model.txt'
+        # Saving the last model used (to be sure, we save it each epoch)
+        PATH = '.\model\last_model.pt'
         torch.save({'epoch': epoch,
                     'model_state': net.state_dict(),
                     'optimizer_state': optimizer.state_dict(),
                     'scheduler_state': scheduler.state_dict(),
                     'loss': prev_loss}, PATH)
         print('Last model saved')
-
+        
+        
 
 
 
