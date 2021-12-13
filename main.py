@@ -10,6 +10,8 @@ import time
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
+import ignite
+import ignite.contrib.metrics.regression as reg
 
 
 
@@ -105,8 +107,8 @@ if __name__ == '__main__':
     
     
     ###### IMPORTANT PARAMETERS TO SET #######
-    epochs = 8
-    first_run = True
+    epochs = 2
+    first_run = False
     ##########################################
     
     
@@ -134,7 +136,7 @@ if __name__ == '__main__':
         net.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
-        current_epoch = checkpoint['epoch'] + 1   #Because we save the last epoch done, so we have to start from the next one
+        current_epoch = checkpoint['epoch']    #Because we save the last epoch as epoch + 1, so we can start from the correct one
         prev_loss = checkpoint['loss']
         final_epoch = current_epoch + epochs
 
@@ -163,7 +165,7 @@ if __name__ == '__main__':
 
     for epoch in range(current_epoch, final_epoch):
 
-        print ('          TRAINING     epoch ',epoch+1,'/', epochs,'\n')
+        print ('          TRAINING     epoch ',epoch+1,'/', final_epoch,'\n')
 
         init_time = time.perf_counter()
         curr_time = init_time
@@ -182,7 +184,7 @@ if __name__ == '__main__':
             optimizer.step()
 
             curr_time, d_time, D_time = clock(curr_time, init_time)
-            print_train(loss, epoch, epochs, iter, train_step, d_time, D_time, R2)    #the number of iterations should be training_set_size/batch_size ---> 3000*0.8/32
+            print_train(loss, epoch, final_epoch, iter, train_step, d_time, D_time, R2)    #the number of iterations should be training_set_size/batch_size ---> 3000*0.8/32
             
         loss_train = np.mean(loss_train)
         all_train_losses.append(loss_train) # storage of the training losses
@@ -193,12 +195,12 @@ if __name__ == '__main__':
         
         pickle.dump({"train_loss": all_train_losses}, open(".\output_train", "wb")) # it overwrites the previous file
         print('\n')
-        print('Train loss of epoch ', epoch +1,' saved')
+        print('Train loss of epoch ', epoch + 1,' saved')
 
         pickle.dump({"R2_train": all_R2_train}, open(".\R2_train_list", "wb"))  # it overwrites the previous file
         print('R2 Train of epoch ', epoch + 1, ' saved')
 
-        print('           TESTING     epoch ',epoch+1,'/', epochs,'\n')
+        print('           TESTING     epoch ',epoch+1,'/', final_epoch,'\n')
 
         loss_test = []
         R2_test = []
@@ -211,7 +213,7 @@ if __name__ == '__main__':
             R2_test.append(R2)
             loss = loss_fn(prediction,y_test)
             loss_test.append(loss.item())
-            print_test(loss, epoch, epochs, iter, test_step, R2)
+            print_test(loss, epoch, final_epoch, iter, test_step, R2)
 
     
         # COMPARISONS AND SAVINGS
@@ -225,15 +227,18 @@ if __name__ == '__main__':
 
         pickle.dump({"test_loss": all_test_losses}, open(".\output_test", "wb")) # it overwrites the previous file
         print('\n')
-        print('Test loss of epoch ', epoch +1,' saved')
+        print('Test loss of epoch ', epoch + 1,' saved')
 
         pickle.dump({"R2_test": all_R2_test}, open(".\R2_test_list", "wb"))  # it overwrites the previous file
         print('R2 Test of epoch ', epoch + 1, ' saved')
 
+        print("The test loss is: ", loss_test)
+        print("We have to beat the loss: ", prev_loss)
+
         if (loss_test < prev_loss):
             prev_loss = loss_test
             PATH = '.\model\model_%d.pt' % epoch
-            torch.save({'epoch': epoch,
+            torch.save({'epoch': epoch + 1,
                         'model_state': net.state_dict(),
                         'optimizer_state': optimizer.state_dict(),
                         'scheduler_state': scheduler.state_dict(),
@@ -243,14 +248,13 @@ if __name__ == '__main__':
 
         # Saving the last model used (to be sure, we save it each epoch)
         PATH = '.\model\last_model.pt'
-        torch.save({'epoch': epoch,
+        torch.save({'epoch': epoch + 1 ,
                     'model_state': net.state_dict(),
                     'optimizer_state': optimizer.state_dict(),
                     'scheduler_state': scheduler.state_dict(),
                     'loss': prev_loss}, PATH)
         print('Last model saved')
-        
-        
+
 
 
 
