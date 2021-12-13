@@ -57,7 +57,7 @@ xi = np.load('../dataset/xHII_z%.3f.npy' %z) #ionization rate
 
 dims = n_igm.shape
 D = dims[0]
-S = 3000 # number of sample points for the reduced database
+S = 3300 # number of sample points for the reduced database
 
 # PREPROCESSING
 

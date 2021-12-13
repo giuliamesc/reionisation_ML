@@ -10,8 +10,6 @@ import time
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
-import ignite
-import ignite.contrib.metrics.regression as reg
 
 
 
@@ -57,7 +55,7 @@ if __name__ == '__main__':
     path_preproc = '../cubes/'
     #path_preproc = 'cubes/' # according to your choice of storage!
     # number of data to use in the training and validation
-    dataset_size = 3000
+    dataset_size = 3300
 
     # load and prepare dataset with shape (dataset_size, input_type, channel_size, xdim, ydim, zdim)
     X = np.zeros((dataset_size, 2, 1, 49, 49, 49))
@@ -68,8 +66,9 @@ if __name__ == '__main__':
         X[i, 1] = n_igm[np.newaxis, ...]
     y = np.loadtxt('%sxi_flatten.txt' % path_preproc)[:dataset_size]
 
-    # split dataset into trianing (80%) and validation set (test_size = 20%)
-    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=2021)
+    # split dataset into training (2500), validation set (500) and prediction set (300)
+    X_train, X_pred, y_train, y_pred = train_test_split(X, y, test_size=0.1, random_state=2021)
+    X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.2, random_state=2021)
 
     train_step = X_train.shape[0]//32 # // returns an approximation to integer of the division
     test_step = X_valid.shape[0]//32
@@ -80,13 +79,16 @@ if __name__ == '__main__':
     # convert numpy array to torch tensor
     X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :, :, :, :]), torch.Tensor(X_train[:, 1, :, :, :, :])
     X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :, :, :, :]), torch.Tensor(X_valid[:, 1, :, :, :, :])
-
+    X_pred_src, X_pred_igm = torch.Tensor(X_pred[:, 0, :, :, :, :]), torch.Tensor(X_pred[:, 1, :, :, :, :])
+    
     del X_train
     del X_valid
+    del X_pred
     gc.collect()
 
     y_train = torch.Tensor(y_train)
     y_valid = torch.Tensor(y_valid)
+    y_pred = torch.Tensor(y_pred)
 
 
     # create pytorch dataset
@@ -255,6 +257,13 @@ if __name__ == '__main__':
                     'loss': prev_loss}, PATH)
         print('Last model saved')
 
+
+
+
+
+    # VALIDATION PLOT
+    y_output = net(X_pred_igm,X_pred_src)
+    correlation_plot( y_output, y_pred)
 
 
 
