@@ -66,8 +66,8 @@ ind3 = np.random.randint(0,D, N)
 
 my_xi = torch.flatten(torch.Tensor(xi[ind1,ind2,ind3]))
 my_xi = my_xi.numpy()
-my_xi = my_xi[:S] # first S elements
 my_xi_valid = my_xi[S:] # last n_valid elements
+my_xi = my_xi[:S] # first S elements
 np.savetxt('cubes/xi_flatten.txt', my_xi)
 np.savetxt('prediction/xi_flatten.txt', my_xi_valid)
 
