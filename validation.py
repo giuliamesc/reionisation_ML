@@ -1,5 +1,5 @@
 import numpy as np
-import CNN
+import CNN_small
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 import pickle
@@ -15,12 +15,12 @@ def plot_losses(epochs, loss_tr, loss_te):
 
 
 def correlation_plot(x_pred, x_true):
-    plt.plot(x_true, x_true, 'r')  # y = x
-    plt.plot(x_true, x_pred, 'bo')  # our actual prediction
+    plt.plot(x_true, x_true, 'r') # y = x
+    plt.plot(x_true, x_pred, 'bo') # our actual prediction
     plt.show()
-    #sigma = np.std(x_pred)
-    #plt.plot(x_true, x_pred + sigma, 'r-')
-    #plt.plot(x_true, x_pred - sigma, 'r-')
+    #sigma = 0.68
+    #plt.plot(x_true, x_pred + sigma*x_pred, 'r-')
+    #plt.plot(x_true, x_pred - sigma*x_pred, 'r-')
 
 
 
@@ -28,7 +28,7 @@ gc.collect()
 
 # DATA IMPORT
 # path to preprocessed dataset
-path_preproc = 'validation/'
+path_preproc = 'validation_small/'
 # path_preproc = 'validation/' # according to your choice of storage!
 # number of data to use in the validation
 dataset_size = 300
@@ -72,14 +72,11 @@ print('Data loading successfully completed')
 
 
 #Loading all the necessary
-net = CNN.CNN()
+net = CNN_small.CNN_small()
 PATH = '.\model\last_model.pt'
 checkpoint = torch.load(PATH)
 net.load_state_dict(checkpoint['model_state'])
 
-
-#Commented code to plot also the losses
-'''
 train_losses = pickle.load(open(".\output_train", "rb"))
 all_train_losses = train_losses["train_loss"]
 
@@ -88,7 +85,6 @@ all_test_losses = test_losses["test_loss"]
 R2_test = pickle.load(open(".\R2_test_list","rb"))
 all_R2_test = R2_test["R2_test"]
 n_epochs = len(all_test_losses)
-'''
 
 
 #Code for the plots
@@ -108,7 +104,7 @@ for i in range(0,dataset_size):
 
 
 
-#plot_losses(np.arange(1,n_epochs+1),all_train_losses,all_test_losses)
+plot_losses(np.arange(1,n_epochs+1),all_train_losses,all_test_losses)
 correlation_plot(predictions,validations)
 
 
