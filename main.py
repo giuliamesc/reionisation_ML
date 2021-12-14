@@ -1,5 +1,5 @@
 import numpy as np
-import CNN
+import CNN_small
 import torch
 from torch import optim
 from torch.utils.data import TensorDataset, DataLoader
@@ -38,9 +38,9 @@ def plot_losses(epochs, loss_tr, loss_te):
 def correlation_plot(x_pred, x_true):
     plt.plot(x_true, x_true, 'r') # y = x
     plt.plot(x_true, x_pred, 'b') # our actual prediction
-    sigma = 0.68
-    plt.plot(x_true, x_pred + sigma*x_pred, 'r-')
-    plt.plot(x_true, x_pred - sigma*x_pred, 'r-')
+    #sigma = 0.68
+    #plt.plot(x_true, x_pred + sigma*x_pred, 'r-')
+    #plt.plot(x_true, x_pred - sigma*x_pred, 'r-')
     
 
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     # DATA IMPORT 
     # path to preprocessed dataset
-    path_preproc = 'cubes/'
+    path_preproc = '../cubes_small/'
     #path_preproc = 'cubes/' # according to your choice of storage!
     # number of data to use in the training and validation
     dataset_size = 120
@@ -66,8 +66,9 @@ if __name__ == '__main__':
         X[i, 1] = n_igm[np.newaxis, ...]
     y = np.loadtxt('%sxi_flatten.txt' % path_preproc)[:dataset_size]
 
-    # split dataset into training and validation set (ratio: 1/5)
+    # split dataset into training (80), validation set (20)
     X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=1/5, random_state=2021)
+
     train_step = X_train.shape[0]//32 # // returns an approximation to integer of the division
     test_step = X_valid.shape[0]//32
     
@@ -77,6 +78,7 @@ if __name__ == '__main__':
     # convert numpy array to torch tensor
     X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :, :, :, :]), torch.Tensor(X_train[:, 1, :, :, :, :])
     X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :, :, :, :]), torch.Tensor(X_valid[:, 1, :, :, :, :])
+
     
     del X_train
     del X_valid
@@ -84,7 +86,6 @@ if __name__ == '__main__':
 
     y_train = torch.Tensor(y_train)
     y_valid = torch.Tensor(y_valid)
-
 
 
     # create pytorch dataset
@@ -105,8 +106,8 @@ if __name__ == '__main__':
     
     
     ###### IMPORTANT PARAMETERS TO SET #######
-    epochs = 2
-    first_run = True
+    epochs = 5
+    first_run = False
     ##########################################
     
     
@@ -114,7 +115,7 @@ if __name__ == '__main__':
     # INITIALIZATION (depending on first run or not)
     
     if (first_run == True):
-        net = CNN.CNN()
+        net = CNN_small.CNN_small()
         optimizer = optim.Adam(net.parameters(), lr=1e-3)  #Adam is an adaptive learning rate method
         scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-7)
         current_epoch = 0
@@ -127,7 +128,7 @@ if __name__ == '__main__':
     else:
         #Resume the training
         PATH = '.\model\last_model.pt'
-        net = CNN.CNN()
+        net = CNN_small.CNN_small()
         optimizer = optim.Adam(net.parameters(), lr=1e-3)
         scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-7)
         checkpoint = torch.load(PATH)
