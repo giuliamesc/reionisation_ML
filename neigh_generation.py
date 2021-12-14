@@ -69,7 +69,7 @@ my_xi = my_xi.numpy()
 my_xi_valid = my_xi[S:] # last n_valid elements
 my_xi = my_xi[:S] # first S elements
 np.savetxt('cubes/xi_flatten.txt', my_xi)
-np.savetxt('prediction/xi_flatten.txt', my_xi_valid)
+np.savetxt('validation/xi_flatten.txt', my_xi_valid)
 
 small_total = np.reshape(np.array([ind1,ind2,ind3]), [N,3])
 
@@ -84,5 +84,5 @@ for count in range(N):
         np.save('cubes/n_igm_i%d.npy' % count, n_igm_nbh)
         np.save('cubes/n_src_i%d.npy' % count, n_src_nbh)
     else:
-        np.save('prediction/n_igm_i%d.npy' % (count - S), n_igm_nbh)
-        np.save('prediction/n_src_i%d.npy' % (count - S), n_src_nbh)
+        np.save('validation/n_igm_i%d.npy' % (count - S), n_igm_nbh)
+        np.save('validation/n_src_i%d.npy' % (count - S), n_src_nbh)
