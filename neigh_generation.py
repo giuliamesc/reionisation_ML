@@ -1,16 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Dec  4 19:06:26 2021
-
-@author: giuli
-"""
-
 import numpy as np
 import torch
-from torch import nn
-from torch import optim
-import random
-import itertools
+
 
 def get_neighborhood(T,P,r): # T = original tensor, (x0,y0,z0) central point, r = radius 
     
@@ -31,16 +21,17 @@ def get_neighborhood(T,P,r): # T = original tensor, (x0,y0,z0) central point, r 
     neigh = np.expand_dims(neigh, axis=0)
     return neigh
 
-def preprocessing(n_igm,n_src):
+def preprocessing(n_igm,n_src, a=0, b=1):
     
     n_igm = 2.95 * 10**55 * n_igm
-    mean_n_igm = np.mean(n_igm)
-    std_n_igm = np.std(n_igm)
-    mean_n_src = np.mean(n_src)
-    std_n_src = np.std(n_src)
-
-    n_igm = (n_igm - mean_n_igm) / std_n_igm
-    n_src = (n_src - mean_n_src) / std_n_src
+    
+    n_min = n_igm.min()
+    n_max = n_igm.max()
+    n_igm = (n_igm - n_min) / (n_max - n_min) * (b-a) + a
+    
+    n_min = n_src.min()
+    n_max = n_src.max()
+    n_src = (n_src - n_min) / (n_max - n_min) * (b-a) + a
     
     return n_igm, n_src
 
@@ -57,7 +48,7 @@ xi = np.load('../dataset/xHII_z%.3f.npy' %z) #ionization rate
 
 dims = n_igm.shape
 D = dims[0]
-S = 3300 # number of sample points for the reduced database
+S = 120 # number of sample points for the reduced database
 
 # PREPROCESSING
 
@@ -73,7 +64,7 @@ ind3 = np.random.randint(0,D, S)
 
 my_xi = torch.flatten(torch.Tensor(xi[ind1,ind2,ind3]))
 my_xi = my_xi.numpy()
-np.savetxt('cubes/xi_flatten.txt', my_xi)
+np.savetxt('../cubes/xi_flatten.txt', my_xi)
 
 small_total = np.reshape(np.array([ind1,ind2,ind3]), [S,3])
 
@@ -84,5 +75,5 @@ for count in range(S):
     n_igm_nbh = torch.tensor(get_neighborhood(n_igm, P, r)).float()
     n_src_nbh = torch.tensor(get_neighborhood(n_src, P, r)).float()
     
-    np.save('cubes/n_igm_i%d.npy' % count, n_igm_nbh)
-    np.save('cubes/n_src_i%d.npy' % count, n_src_nbh)
+    np.save('../cubes/n_igm_i%d.npy' % count, n_igm_nbh)
+    np.save('../cubes/n_src_i%d.npy' % count, n_src_nbh)
