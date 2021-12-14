@@ -38,9 +38,9 @@ def plot_losses(epochs, loss_tr, loss_te):
 def correlation_plot(x_pred, x_true):
     plt.plot(x_true, x_true, 'r') # y = x
     plt.plot(x_true, x_pred, 'b') # our actual prediction
-    sigma = np.std(x_pred)
-    plt.plot(x_true, x_pred + sigma, 'r-')
-    plt.plot(x_true, x_pred - sigma, 'r-')
+    sigma = 0.68
+    plt.plot(x_true, x_pred + sigma*x_pred, 'r-')
+    plt.plot(x_true, x_pred - sigma*x_pred, 'r-')
     
 
 
