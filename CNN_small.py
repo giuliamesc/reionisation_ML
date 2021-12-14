@@ -4,9 +4,9 @@ from torch import nn
 
 # Construction of the Convolutionary Neural Network class
 
-class CNN(nn.Module):
+class CNN_small(nn.Module):
     def __init__(self):
-        super(CNN, self).__init__()
+        super(CNN_small, self).__init__()
         
         # MAIN PARAMETERS
         self.kernel_size = 5
@@ -50,20 +50,12 @@ class CNN(nn.Module):
         self.dense = nn.Linear(in_features=442368, out_features=256)
         self.dropout_1 = nn.Dropout(p=0.5)
         self.leaky_re_lu_18 = nn.LeakyReLU()
-        
-        self.dense_1 = nn.Linear(in_features=256, out_features=128)
-        self.dropout_2 = nn.Dropout(p=0.5)
-        self.leaky_re_lu_19 = nn.LeakyReLU()
-        
-        self.dense_2 = nn.Linear(in_features=128, out_features=64)
+              
+        self.dense_2 = nn.Linear(in_features=256, out_features=64)
         self.dropout_3 = nn.Dropout(p=0.5)
         self.leaky_re_lu_20 = nn.LeakyReLU()
-
-        self.dense_3 = nn.Linear(in_features=64, out_features=32)
-        self.dropout_4 = nn.Dropout(p=0.5)
-        self.leaky_re_lu_21 = nn.LeakyReLU()
         
-        self.dense_4 = nn.Linear(in_features=32, out_features=16)
+        self.dense_4 = nn.Linear(in_features=64, out_features=16)
         self.dropout_5 = nn.Dropout(p=0.5)
         self.leaky_re_lu_22 = nn.LeakyReLU()
         
@@ -111,17 +103,9 @@ class CNN(nn.Module):
         out = self.dropout_1(out)
         out = self.leaky_re_lu_18(out)
 
-        out = self.dense_1(out)
-        out = self.dropout_2(out)
-        out = self.leaky_re_lu_19(out)
-
         out = self.dense_2(out)
         out = self.dropout_3(out)
         out = self.leaky_re_lu_20(out)
-
-        out = self.dense_3(out)
-        out = self.dropout_4(out)
-        out = self.leaky_re_lu_21(out)
 
         out = self.dense_4(out)
         out = self.dropout_5(out)
