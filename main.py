@@ -55,7 +55,7 @@ if __name__ == '__main__':
     path_preproc = '../cubes/'
     #path_preproc = 'cubes/' # according to your choice of storage!
     # number of data to use in the training and validation
-    dataset_size = 3300
+    dataset_size = 120
 
     # load and prepare dataset with shape (dataset_size, input_type, channel_size, xdim, ydim, zdim)
     X = np.zeros((dataset_size, 2, 1, 49, 49, 49))
@@ -66,10 +66,9 @@ if __name__ == '__main__':
         X[i, 1] = n_igm[np.newaxis, ...]
     y = np.loadtxt('%sxi_flatten.txt' % path_preproc)[:dataset_size]
 
-    # split dataset into training (2500), validation set (500) and prediction set (300)
-    X_train, X_pred, y_train, y_pred = train_test_split(X, y, test_size=0.1, random_state=2021)
-    X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.2, random_state=2021)
-
+    # split dataset into training (80), validation set (20) and prediction set (20)
+    X_train, X_pred, y_train, y_pred = train_test_split(X, y, test_size=1/6, random_state=2021)
+    X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=1/5, random_state=2021)
     train_step = X_train.shape[0]//32 # // returns an approximation to integer of the division
     test_step = X_valid.shape[0]//32
     
@@ -110,7 +109,7 @@ if __name__ == '__main__':
     
     ###### IMPORTANT PARAMETERS TO SET #######
     epochs = 2
-    first_run = False
+    first_run = True
     ##########################################
     
     
