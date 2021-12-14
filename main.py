@@ -270,9 +270,6 @@ if __name__ == '__main__':
 
 
 
-    # VALIDATION PLOT
-    y_output = net(X_pred_igm,X_pred_src)
-    correlation_plot( y_output, y_pred)
 
 
 
