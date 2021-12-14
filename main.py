@@ -53,11 +53,9 @@ if __name__ == '__main__':
     # DATA IMPORT 
     # path to preprocessed dataset
     path_preproc = 'cubes/'
-    path_pred = 'prediction/'
     #path_preproc = 'cubes/' # according to your choice of storage!
     # number of data to use in the training and validation
     dataset_size = 120
-    pred_size = 300
 
     # load and prepare dataset with shape (dataset_size, input_type, channel_size, xdim, ydim, zdim)
     X = np.zeros((dataset_size, 2, 1, 49, 49, 49))
@@ -73,31 +71,20 @@ if __name__ == '__main__':
     train_step = X_train.shape[0]//32 # // returns an approximation to integer of the division
     test_step = X_valid.shape[0]//32
     
-    # loading prediction dataset
-    X_pred = np.zeros((pred_size, 2, 1, 49, 49, 49))
-    for i in range(pred_size):
-        n_src = np.load('%sn_src_i%d.npy' % (path_pred, i))
-        n_igm = np.load('%sn_igm_i%d.npy' % (path_pred, i))
-        X_pred[i, 0] = n_src[np.newaxis, ...]
-        X_pred[i, 1] = n_igm[np.newaxis, ...]
-    y_pred = np.loadtxt('%sxi_flatten.txt' % path_pred)[:dataset_size]
-    
     del X
     gc.collect()
 
     # convert numpy array to torch tensor
     X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :, :, :, :]), torch.Tensor(X_train[:, 1, :, :, :, :])
     X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :, :, :, :]), torch.Tensor(X_valid[:, 1, :, :, :, :])
-    X_pred_src, X_pred_igm = torch.Tensor(X_pred[:, 0, :, :, :, :]), torch.Tensor(X_pred[:, 1, :, :, :, :])
     
     del X_train
     del X_valid
-    del X_pred
     gc.collect()
 
     y_train = torch.Tensor(y_train)
     y_valid = torch.Tensor(y_valid)
-    y_pred = torch.Tensor(y_pred)
+
 
 
     # create pytorch dataset
