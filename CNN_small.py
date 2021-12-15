@@ -45,18 +45,18 @@ class CNN_small(nn.Module):
         
         #self.concatenate = torch.cat()
         #self.flatten = torch.flatten()
-        self.dropout = nn.Dropout(p=0.8)
+        self.dropout = nn.Dropout(p=0.1)
 
         self.dense = nn.Linear(in_features=442368, out_features=256)
-        self.dropout_1 = nn.Dropout(p=0.5)
+        self.dropout_1 = nn.Dropout(p=0.05)
         self.leaky_re_lu_18 = nn.LeakyReLU()
               
         self.dense_2 = nn.Linear(in_features=256, out_features=64)
-        self.dropout_3 = nn.Dropout(p=0.5)
+        self.dropout_3 = nn.Dropout(p=0.1)
         self.leaky_re_lu_20 = nn.LeakyReLU()
         
         self.dense_4 = nn.Linear(in_features=64, out_features=16)
-        self.dropout_5 = nn.Dropout(p=0.5)
+        self.dropout_5 = nn.Dropout(p=0.1)
         self.leaky_re_lu_22 = nn.LeakyReLU()
         
         self.dense_5 = nn.Linear(in_features=16, out_features=8)
