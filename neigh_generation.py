@@ -71,7 +71,7 @@ my_xi = my_xi[:S] # first S elements
 np.savetxt('cubes/xi_flatten.txt', my_xi)
 np.savetxt('validation/xi_flatten.txt', my_xi_valid)
 
-small_total = np.reshape(np.array([ind1,ind2,ind3]), [N,3])
+small_total = np.vstack((np.vstack(ind1,ind2), ind3))
 
 for count in range(N):
     
