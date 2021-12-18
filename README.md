@@ -14,6 +14,22 @@ The aim of the project is to enhance Machine Learning usage in the study of the 
 - Store them in a folder called `dataset`, on the same level of your local `reionisation_ML` repository
 - **Only for the Convolutional Neural Network**: run the script `generate_neigh.py`, which will generate a folder `cubes` on the same level of your code, containing the input data (which consists of neighborhoods of points) for the CNN
 
+## Packages Needed
+We have projected our Neural Network with `torch`, version (INSERT PAOLO'S VERSION).
+
+The packages that are needed for the project are:
+### Core
+- `numpy`
+- `matplotlib`
+- `torch`
+- `sklearn`
+### Utilities
+- `pickle`
+- `gc`
+- `time `
+
+
+
 ## Structure
 The code structure is the following:
 - `FCN.py`, importable script containing the definition of the Fully Connected Neural Network
@@ -21,6 +37,8 @@ The code structure is the following:
 - `neigh_generation.py`, which preprocesses the input for the CNN
 - `dataloader.py`, importable script containing utilities for the loading of train and test data
 - `validation.py`, which generates some plots used for accuracy evaluation of the NNs - CALL IT PREDICTION PLS :(
+- Folder `Weekly Meetings` contains our weekly presentations to the tutor with the updates of our work
+- `Report.pdf` is the final 4-pages report delivered
 
 ## Instructions for training
 Our code contains a feature which enables to stop the training and then to restart it from the point on which we interrupted it; thanks to this strategy, the net can be trained on a laptop without being forced to wait until a very long training is completed, and at the same time ensuring a backup in case something goes wrong. 
