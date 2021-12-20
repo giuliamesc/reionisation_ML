@@ -32,6 +32,7 @@ The packages that are needed for the project are:
 
 ## Structure
 The code structure is the following:
+- `main.py`, the Python script to run
 - `FNN.py`, importable script containing the definition of the Fully Connected Neural Network
 - `CNN.py`, importable script containing the definition of the Convolutional Neural Network
 - `neigh_generation.py`, which preprocesses the input for the CNN
