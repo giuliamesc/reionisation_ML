@@ -35,9 +35,9 @@ The code structure is the following:
 - `FNN.py`, importable script containing the definition of the Fully Connected Neural Network
 - `CNN.py`, importable script containing the definition of the Convolutional Neural Network
 - `neigh_generation.py`, which preprocesses the input for the CNN
-- `dataloader.py`, importable script containing utilities for the loading of train and test data
-- `validation.py`, which generates some plots used for accuracy evaluation of the NNs - CALL IT PREDICTION PLS :(
-- Folder `Weekly Meetings` contains our weekly presentations to the tutor with the updates of our work
+- `parameters.py`, which contains a list of useful parameters
+- `plotting.py`, which generates some plots used for accuracy evaluation of the NNs 
+- Folder `Weekly Meetings` contains our presentations to the tutor with the updates of our work of the week
 - `Report.pdf` is the final 4-pages report delivered
 
 ## Instructions for training
