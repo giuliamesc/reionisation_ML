@@ -1,2 +1,5 @@
 
-__pycache__/CNN.cpython-39.pyc
+*.ipynb
+*.npy
+*.png
+*.txt
