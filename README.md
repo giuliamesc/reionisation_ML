@@ -10,7 +10,7 @@ We have worked in the framework of *ML4Science* projects and collaborated with t
 The aim of the project is to enhance Machine Learning usage in the study of the radiation behavior in the universe during the Epoch of Reionisation, that is, the period of formation of the first galaxies and stars.
 
 ## Data Loading
-- Download the data from SEND A LINK TO THE DATASET
+- Download the data from [here](https://drive.google.com/drive/folders/1d-FjkS6f8e1Q5F3k0Yz2rygxk8f7hqS_?usp=sharing)
 - Store them in a folder called `dataset`, on the same level of your local `reionisation_ML` repository
 - **Only for the Convolutional Neural Network**: run the script `generate_neigh.py`, which will generate a folder `cubes` on the same level of your code, containing the input data (which consists of neighborhoods of points) for the CNN
 
