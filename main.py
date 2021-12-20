@@ -13,7 +13,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from shutill import rmtree
+from shutil import rmtree
 from os import makedirs
 
 
@@ -62,12 +62,12 @@ if __name__ == '__main__':
     #path_preproc = 'cubes/' # according to your choice of storage!
     # number of data to use in the training and validation
     dataset_size = parameters.S
+    path_preproc = './cubes/'
 
     # ======= CNN ======
     # load and prepare dataset with shape (dataset_size, input_type, channel_size, xdim, ydim, zdim)
     if (parameters.net_type == 'CNN'):
-        path_preproc = './cubes_CNN/'
-        D = 2*parameters.S+1
+        D = 2*parameters.r+1
         X = np.zeros((dataset_size, 2, 1, D, D, D))
         for i in range(dataset_size):
             n_src = np.load('%sn_src_i%d.npy' % (path_preproc, i), allow_pickle=True)
@@ -97,7 +97,6 @@ if __name__ == '__main__':
     
     # ======= FNN ======
     if (parameters.net_type == 'FNN'):
-        path_preproc = './cubes_FNN/'
         batch_size = 128
 
         n_src = np.loadtxt('%sn_src_flatten.txt' % (path_preproc))[:dataset_size]
@@ -143,6 +142,10 @@ if __name__ == '__main__':
     
     if (parameters.first_run == True):
         
+        makedirs('./checkpoints/', exist_ok=True)
+        rmtree('./checkpoints/') # to remove all previous checkpoint files
+        makedirs('./checkpoints/') 
+        
         if (parameters.net_type=='CNN'):
             net = CNN.CNN()
         else:
@@ -179,13 +182,13 @@ if __name__ == '__main__':
         prev_loss = checkpoint['loss']
         final_epoch = current_epoch + epochs
 
-        train_losses = pickle.load(open("./checkpoints/loss_train", "rb"))  #To load the vector of train losses
-        test_losses = pickle.load(open("./checkpoints/loss_test", "rb"))    # To load the vector of test losses
+        train_losses = pickle.load(open("./checkpoints/loss_train.txt", "rb"))  #To load the vector of train losses
+        test_losses = pickle.load(open("./checkpoints/loss_test.txt", "rb"))    # To load the vector of test losses
         all_test_losses = test_losses["test_loss"]
         all_train_losses = train_losses["train_loss"]
         #Loading R2 lists of train and test
-        R2_train = pickle.load(open("./checkpoints/R2_train","rb"))
-        R2_test = pickle.load(open("./checkpoints/R2_test", "rb"))
+        R2_train = pickle.load(open("./checkpoints/R2_train.txt","rb"))
+        R2_test = pickle.load(open("./checkpoints/R2_test.txt", "rb"))
         all_R2_train = R2_train["R2_train"]
         all_R2_test = R2_test["R2_test"]
      
@@ -229,11 +232,11 @@ if __name__ == '__main__':
         all_R2_train.append(R2_train)
 
         
-        pickle.dump({"train_loss": all_train_losses}, open("./checkpoints/loss_train", "wb")) # it overwrites the previous file
+        pickle.dump({"train_loss": all_train_losses}, open("./checkpoints/loss_train.txt", "wb")) # it overwrites the previous file
         #print('\n')
         #print('Train loss of epoch ', epoch +1,' saved')
 
-        pickle.dump({"R2_train": all_R2_train}, open("./checkpoints/R2_train", "wb"))  # it overwrites the previous file
+        pickle.dump({"R2_train": all_R2_train}, open("./checkpoints/R2_train.txt", "wb"))  # it overwrites the previous file
         #print('R2 Train of epoch ', epoch + 1, ' saved')
 
         #print('           TESTING     epoch ',epoch+1,'/', epochs,'\n')
@@ -266,11 +269,11 @@ if __name__ == '__main__':
         R2_test = np.mean(R2_test)
         all_R2_test.append(R2_test)
 
-        pickle.dump({"test_loss": all_test_losses}, open("./checkpoints/loss_test", "wb")) # it overwrites the previous file
+        pickle.dump({"test_loss": all_test_losses}, open("./checkpoints/loss_test.txt", "wb")) # it overwrites the previous file
         #print('\n')
         #print('Test loss of epoch ', epoch +1,' saved')
 
-        pickle.dump({"R2_test": all_R2_test}, open("./checkpoints/R2_test", "wb"))  # it overwrites the previous file
+        pickle.dump({"R2_test": all_R2_test}, open("./checkpoints/R2_test.txt", "wb"))  # it overwrites the previous file
         #print('R2 Test of epoch ', epoch + 1, ' saved')
 
         if (loss_test < prev_loss):
@@ -293,23 +296,3 @@ if __name__ == '__main__':
                     'scheduler_state': scheduler.state_dict(),
                     'loss': prev_loss}, PATH)
         #print('Last model saved')
-
-
-        # Saving the last model used (to be sure, we save it each epoch)
-        PATH = '.\model\last_model.pt'
-        torch.save({'epoch': epoch + 1 ,
-                    'model_state': net.state_dict(),
-                    'optimizer_state': optimizer.state_dict(),
-                    'scheduler_state': scheduler.state_dict(),
-                    'loss': prev_loss}, PATH)
-        print('Last model saved')
-
-
-
-
-
-
-
-
-
-

@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import parameters
 
 
 # Construction of the Convolutionary Neural Network class
@@ -14,6 +15,7 @@ class CNN(nn.Module):
         
         self.kernel_pooling = 2
         self.stride_pool = self.kernel_pooling
+        self.in_feat_param = 8 * parameters.r**3
                 
         # CONVOLUTIONAL BRANCH
         self.conv3d_1 = nn.Conv3d(in_channels=1, out_channels=16, kernel_size=self.kernel_size, stride=self.stride_conv, padding=self.padding)
@@ -28,8 +30,7 @@ class CNN(nn.Module):
         # FULLY CONNECTED BRANCH
         self.dropout = nn.Dropout(p=0.1)
         
-        #self.dense_1 = nn.Linear(in_features=110592, out_features=256)
-        self.dense_1 = nn.Linear(in_features=13824, out_features=256)
+        self.dense_1 = nn.Linear(in_features=self.in_feat_param, out_features=256)
         self.dense_2 = nn.Linear(in_features=256, out_features=128)
         self.dense_3 = nn.Linear(in_features=128, out_features=64)
         self.dense_4 = nn.Linear(in_features=64, out_features=32)

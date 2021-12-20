@@ -1,5 +1,7 @@
-import numpy as np
 import parameters
+import numpy as np
+from shutil import rmtree
+from os import makedirs
 
 def preprocessing(n_igm,n_src):
     
@@ -22,11 +24,12 @@ np.random.seed(2021)
 
 # DATA LOADING
 path = './dataset/'
-if (parameters.net_type=='CNN'):
-    path_out = './cubes_CNN/'
-else:
-    path_out = './cubes_FNN/'
-    
+path_out = './cubes/'
+
+makedirs(path_out, exist_ok=True)
+rmtree(path_out) # to remove all previous generated cubes
+makedirs(path_out) 
+
 n_igm = np.load('%srho_z%.3f.npy' %(path, z))  # density of intergalactic medium
 n_igm = n_igm / np.mean(n_igm) - 1.
 n_src = np.load('%snsrc_z%.3f.npy' %(path, z)) # number of sources per volume
