@@ -1,25 +1,4 @@
 import numpy as np
-import torch
-
-
-def get_neighborhood(T,P,r): # T = original tensor, (x0,y0,z0) central point, r = radius 
-    
-    edge = T.shape[0]
-    
-    x0 = P[0]
-    y0 = P[1]
-    z0 = P[2]
-    
-    # '+' for lists is to concatenate when x0+r exceeds the cube edge
-    idx = list(range(x0-r, min(edge,x0+r+1))) + list(range(max(edge,x0+r+1) % edge))
-    idy = list(range(y0-r, min(edge,y0+r+1))) + list(range(max(edge,y0+r+1) % edge))
-    idz = list(range(z0-r, min(edge,z0+r+1))) + list(range(max(edge,z0+r+1) % edge))
-    
-    Tm = T[:,:,:]
-    neigh = Tm[idx,:,:][:,idy,:][:,:,idz]
-    neigh = np.expand_dims(neigh, axis=0)
-    neigh = np.expand_dims(neigh, axis=0)
-    return neigh
 
 def preprocessing(n_igm,n_src, a=0, b=1):
     
@@ -35,54 +14,60 @@ def preprocessing(n_igm,n_src, a=0, b=1):
     
     return n_igm, n_src
 
+##### IMPORTANT PARAMETERS TO SET #####
 z = 8.397
 r = 24
+#######################################
 
 np.random.seed(2021)
 
 # DATA LOADING
-    
-n_igm = np.load('../dataset/rho_z%.3f.npy' %z)  # density of intergalactic medium
-n_src = np.load('../dataset/nsrc_z%.3f.npy' %z) # number of sources per volume
-xi = np.load('../dataset/xHII_z%.3f.npy' %z) #ionization rate
+path = './dataset/'
+path_out = './cubes_CNN/'
+n_igm = np.load('%srho_z%.3f.npy' %(path, z))  # density of intergalactic medium
+n_igm = n_igm / np.mean(n_igm) - 1.
+n_src = np.load('%snsrc_z%.3f.npy' %(path, z)) # number of sources per volume
+xi = np.load('%sxHII_z%.3f.npy' %(path, z)) #ionization rate
 
-dims = n_igm.shape
-D = dims[0]
-S = 120 # number of sample points for the reduced database
-n_valid = 300
-N = S + n_valid
+
+D = n_igm.shape[0]
+S = 10000    #10000 or 300 for the correlation plot
+
 
 # PREPROCESSING
 
 n_igm, n_src = preprocessing(n_igm, n_src)
 
-# EXTRACTION OF THE 3000 INDEXES TO DEAL WITH A NOT TOO HUGE DATASET
+# EXTRACTION OF THE S INDICES TO DEAL WITH A NOT TOO HUGE DATASET
 
-ind1 = np.random.randint(0,D, N)
-ind2 = np.random.randint(0,D, N)
-ind3 = np.random.randint(0,D, N)
+ind1 = np.random.randint(0,D-r, S)
+ind2 = np.random.randint(0,D-r, S)
+ind3 = np.random.randint(0,D-r, S)
 
 # STORAGE OF n_igm,n_src FOR THE NEIGHBORHOODS AND OF x_i FOR THE POINTS SELECTED
 
-my_xi = torch.flatten(torch.Tensor(xi[ind1,ind2,ind3]))
-my_xi = my_xi.numpy()
-my_xi_valid = my_xi[S:] # last n_valid elements
-my_xi = my_xi[:S] # first S elements
-np.savetxt('cubes_small/xi_flatten.txt', my_xi)
-np.savetxt('validation_small/xi_flatten.txt', my_xi_valid)
+target = []
+cell_n_igm = []
+cell_n_src = []
+n_igm = (n_igm - n_igm.min()) / (n_igm.max() - n_igm.min())
+n_src = (n_src - n_src.min()) / (n_src.max() - n_src.min())
+for count in range(S):
+    if (count%100==0):
+        print (count, '/',S)
+    i, j, k = ind1[count], ind2[count], ind3[count]
 
-small_total = np.vstack((np.vstack(ind1,ind2), ind3))
+    target.append(xi[i,j,k])
+    cell_n_igm.append(n_igm[i,j,k])
+    cell_n_src.append(n_src[i,j,k])
 
-for count in range(N):
+    subvol_igm = n_igm[i-(r+1):i+r, j-(r+1):j+r, k-(r+1):k+r]
+    subvol_src = n_src[i-(r+1):i+r, j-(r+1):j+r, k-(r+1):k+r]
     
-    P = small_total[count,:]
-
-    n_igm_nbh = torch.tensor(get_neighborhood(n_igm, P, r)).float()
-    n_src_nbh = torch.tensor(get_neighborhood(n_src, P, r)).float()
-    
-    if (count < S) :
-        np.save('cubes_small/n_igm_i%d.npy' % count, n_igm_nbh)
-        np.save('cubes_small/n_src_i%d.npy' % count, n_src_nbh)
-    else:
-        np.save('validation_small/n_igm_i%d.npy' % (count - S), n_igm_nbh)
-        np.save('validation_small/n_src_i%d.npy' % (count - S), n_src_nbh)
+    norm_subvol_igm, norm_subvol_src = subvol_igm, subvol_src  #preprocessing(subvol_igm, subvol_src)
+    assert norm_subvol_igm.shape == (2*r+1,2*r+1,2*r+1)
+    assert norm_subvol_src.shape == (2*r+1,2*r+1,2*r+1)
+    np.save('%sn_igm_i%d.npy' %(path_out, count), norm_subvol_igm)
+    np.save('%sn_src_i%d.npy' %(path_out, count), norm_subvol_src)
+    np.savetxt('%sxi_flatten.txt' %path_out, target)
+    np.savetxt('%sn_igm_flatten.txt' %path_out, cell_n_igm)
+    np.savetxt('%sn_src_flatten.txt' %path_out, cell_n_src)
