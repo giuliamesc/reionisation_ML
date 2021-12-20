@@ -1,6 +1,7 @@
 import numpy as np
 import CNN
 import FNN
+import parameters
 import torch
 from torch import optim
 from torch.utils.data import TensorDataset, DataLoader
@@ -12,6 +13,8 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from shutill import rmtree
+from os import makedirs
 
 
 
@@ -54,59 +57,61 @@ if __name__ == '__main__':
 
     gc.collect()
 
-    # DATA IMPORT 
-    # path to preprocessed dataset
-    path_preproc = './cubes_CNN/'
+
+        
     #path_preproc = 'cubes/' # according to your choice of storage!
     # number of data to use in the training and validation
-    dataset_size = 10000
+    dataset_size = parameters.S
 
     # ======= CNN ======
     # load and prepare dataset with shape (dataset_size, input_type, channel_size, xdim, ydim, zdim)
-    X = np.zeros((dataset_size, 2, 1, 49, 49, 49))
-    #X = np.zeros((dataset_size, 2, 1, 25,25,25))
-    for i in range(dataset_size):
-        n_src = np.load('%sn_src_i%d.npy' % (path_preproc, i), allow_pickle=True)
-        n_igm = np.load('%sn_igm_i%d.npy' % (path_preproc, i), allow_pickle=True)
-        X[i, 0] = n_src[np.newaxis, ...]
-        X[i, 1] = n_igm[np.newaxis, ...]
-    y = np.loadtxt('%sxi_flatten.txt' % path_preproc)[:dataset_size]
+    if (parameters.net_type == 'CNN'):
+        path_preproc = './cubes_CNN/'
+        D = 2*parameters.S+1
+        X = np.zeros((dataset_size, 2, 1, D, D, D))
+        for i in range(dataset_size):
+            n_src = np.load('%sn_src_i%d.npy' % (path_preproc, i), allow_pickle=True)
+            n_igm = np.load('%sn_igm_i%d.npy' % (path_preproc, i), allow_pickle=True)
+            X[i, 0] = n_src[np.newaxis, ...]
+            X[i, 1] = n_igm[np.newaxis, ...]
+        y = np.loadtxt('%sxi_flatten.txt' % path_preproc)[:dataset_size]
 
-    # split dataset into trianing (80%) and validation set (test_size = 20%)
-    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=2021)
-    batch_size = 24
-    train_step = X_train.shape[0]//batch_size # // returns an approximation to integer of the division
-    test_step = X_valid.shape[0]//batch_size
+        # split dataset into trianing (80%) and validation set (test_size = 20%)
+        X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=2021)
+        batch_size = parameters.batch_size
+        train_step = X_train.shape[0]//batch_size # // returns an approximation to integer of the division
+        test_step = X_valid.shape[0]//batch_size
     
-    del X
-    gc.collect()
+        del X
+        gc.collect()
 
-    # convert numpy array to torch tensor
-    X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :, :, :, :]), torch.Tensor(X_train[:, 1, :, :, :, :])
-    X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :, :, :, :]), torch.Tensor(X_valid[:, 1, :, :, :, :])
+        # convert numpy array to torch tensor
+        X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :, :, :, :]), torch.Tensor(X_train[:, 1, :, :, :, :])
+        X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :, :, :, :]), torch.Tensor(X_valid[:, 1, :, :, :, :])
 
-    del X_train
-    del X_valid
-    gc.collect()
+        del X_train
+        del X_valid
+        gc.collect()
     # =================
     
     
-    """
     # ======= FNN ======
-    batch_size = 128
+    if (parameters.net_type == 'FNN'):
+        path_preproc = './cubes_FNN/'
+        batch_size = 128
 
-    n_src = np.loadtxt('%sn_src_flatten.txt' % (path_preproc))[:dataset_size]
-    n_igm = np.loadtxt('%sn_igm_flatten.txt' % (path_preproc))[:dataset_size]
-    X = np.vstack((n_src, n_igm)).T[..., np.newaxis]
-    y = np.loadtxt(path_preproc+'xi_flatten.txt')[:dataset_size]
+        n_src = np.loadtxt('%sn_src_flatten.txt' % (path_preproc))[:dataset_size]
+        n_igm = np.loadtxt('%sn_igm_flatten.txt' % (path_preproc))[:dataset_size]
+        X = np.vstack((n_src, n_igm)).T[..., np.newaxis]
+        y = np.loadtxt(path_preproc+'xi_flatten.txt')[:dataset_size]
 
-    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=2021)
+        X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=2021)
     
-    # convert numpy array to torch tensor
-    X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :]), torch.Tensor(X_train[:, 1, :])
-    X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :]), torch.Tensor(X_valid[:, 1, :])
+        # convert numpy array to torch tensor
+        X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :]), torch.Tensor(X_train[:, 1, :])
+        X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :]), torch.Tensor(X_valid[:, 1, :])
     # =================
-    """
+
 
     y_train = torch.Tensor(y_train)
     y_valid = torch.Tensor(y_valid)
@@ -126,10 +131,9 @@ if __name__ == '__main__':
     print ('Data loading successfully completed')
     
     
-    ###### IMPORTANT PARAMETERS TO SET #######
-    epochs = 150
-    first_run = True
-    ##########################################
+
+    epochs = parameters.epochs
+
     if(torch.cuda.is_available()):
         loss_fn = torch.nn.MSELoss().cuda()
     else:
@@ -137,12 +141,16 @@ if __name__ == '__main__':
     
     # INITIALIZATION (depending on first run or not)
     
-    if (first_run == True):
-        #net = CNN_test.CNN()
-        net = CNN.CNN()
-        #net = FNN.FNN()
+    if (parameters.first_run == True):
+        
+        if (parameters.net_type=='CNN'):
+            net = CNN.CNN()
+        else:
+            net = FNN.FNN()
+            
         if(torch.cuda.is_available()):
             net = net.cuda()
+            
         optimizer = optim.Adam(net.parameters(), lr=1e-3, weight_decay=1e-4)  #Adam is an adaptive learning rate method
         scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 10, min_lr=1e-12, verbose=True)
         current_epoch = 0
@@ -155,10 +163,11 @@ if __name__ == '__main__':
     else:
         #Resume the training
         PATH = './checkpoints/last_model.pt'
-        #net = CNN_small.CNN_small()
-        net = CNN.CNN()
-        #net = FNN.FNN()
-        #net = CNN_test.CNN()
+        
+        if (parameters.net_type=='CNN'):
+            net = CNN.CNN()
+        else:
+            net = FNN.FNN()
         
         optimizer = optim.Adam(net.parameters(), lr=1e-3, weight_decay=1e-4)
         scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-12, verbose=True)
@@ -206,7 +215,6 @@ if __name__ == '__main__':
             loss = loss_fn(output, y_train)  # compute loss function
             loss_train.append(loss.item()) # storing the training losses
             R2 = r2_score(y_train.cpu().detach().numpy(), output.cpu().detach().numpy())
-            #R2 = R2Score(output_transform=(output, y_train)).compute()
             R2_train.append(R2)
             loss.backward()  # backpropagation
             optimizer.step()

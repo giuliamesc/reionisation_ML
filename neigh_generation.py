@@ -1,29 +1,32 @@
 import numpy as np
+import parameters
 
-def preprocessing(n_igm,n_src, a=0, b=1):
+def preprocessing(n_igm,n_src):
     
     n_igm = 2.95 * 10**55 * n_igm
-    
-    n_min = n_igm.min()
-    n_max = n_igm.max()
-    n_igm = (n_igm - n_min) / (n_max - n_min) * (b-a) + a
-    
-    n_min = n_src.min()
-    n_max = n_src.max()
-    n_src = (n_src - n_min) / (n_max - n_min) * (b-a) + a
+
+    mean_n_igm = np.mean(n_igm)
+    std_n_igm = np.std(n_igm)
+    mean_n_src = np.mean(n_src)
+    std_n_src = np.std(n_src)
+
+    n_igm = (n_igm - mean_n_igm) / std_n_igm
+    n_src = (n_src - mean_n_src) / std_n_src
     
     return n_igm, n_src
 
-##### IMPORTANT PARAMETERS TO SET #####
-z = 8.397
-r = 24
-#######################################
 
+z = parameters.z
+r = parameters.r
 np.random.seed(2021)
 
 # DATA LOADING
 path = './dataset/'
-path_out = './cubes_CNN/'
+if (parameters.net_type=='CNN'):
+    path_out = './cubes_CNN/'
+else:
+    path_out = './cubes_FNN/'
+    
 n_igm = np.load('%srho_z%.3f.npy' %(path, z))  # density of intergalactic medium
 n_igm = n_igm / np.mean(n_igm) - 1.
 n_src = np.load('%snsrc_z%.3f.npy' %(path, z)) # number of sources per volume
@@ -31,26 +34,22 @@ xi = np.load('%sxHII_z%.3f.npy' %(path, z)) #ionization rate
 
 
 D = n_igm.shape[0]
-S = 10000    #10000 or 300 for the correlation plot
+S = parameters.S
 
-
-# PREPROCESSING
-
-n_igm, n_src = preprocessing(n_igm, n_src)
 
 # EXTRACTION OF THE S INDICES TO DEAL WITH A NOT TOO HUGE DATASET
 
-ind1 = np.random.randint(0,D-r, S)
-ind2 = np.random.randint(0,D-r, S)
-ind3 = np.random.randint(0,D-r, S)
+ind1 = np.random.randint(r+1, D-r, S)
+ind2 = np.random.randint(r+1, D-r, S)
+ind3 = np.random.randint(r+1, D-r, S)
 
 # STORAGE OF n_igm,n_src FOR THE NEIGHBORHOODS AND OF x_i FOR THE POINTS SELECTED
 
 target = []
 cell_n_igm = []
 cell_n_src = []
-n_igm = (n_igm - n_igm.min()) / (n_igm.max() - n_igm.min())
-n_src = (n_src - n_src.min()) / (n_src.max() - n_src.min())
+n_igm, n_src = preprocessing(n_igm,n_src)
+
 for count in range(S):
     if (count%100==0):
         print (count, '/',S)
