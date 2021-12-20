@@ -18,27 +18,7 @@ from os import makedirs
 
 
 
-def print_train (loss, epoch, n_epochs, iter, n_iters, d_time, D_time, R2):
-    time_ratio = float(n_iters - iter - 1)/((iter+1))
-    remaining_time = D_time * time_ratio
-    print ('epoch ', epoch+1,'/',n_epochs, ' |   iter ',iter+1, '/',n_iters, ' |  loss = ', format(torch.Tensor.detach(loss).item(), ".4f"), '|  R2 = ', format(R2, ".4f"), ' |   time: ', format(d_time, ".3f"), '  |   to end of epoch: ', format(remaining_time, ".3f"))
 
-
-def print_test(loss, epoch, n_epochs, iter, n_iters, R2):
-    print('epoch ', epoch+1,'/',n_epochs, ' |   iter ',iter+1, '/',n_iters, ' |  loss = ', format(torch.Tensor.detach(loss).item(), ".4f"), '|  R2 = ', format(R2, ".4f"))
-
-
-def clock(curr_time, init_time): # to compute iteration time
-    time_next = time.perf_counter()
-    d_time = time_next - curr_time # delta-time between two iterations
-    D_time = time_next - init_time # delta-time from the beginning
-    return time_next, d_time, D_time
-
-def plot_losses(epochs, loss_tr, loss_te):
-    plt.plot(epochs, loss_tr, 'r') # training losses
-    plt.plot(epochs, loss_te, 'g') # test losses
-    plt.title('Losses trends')
-    plt.show()
     
 def correlation_plot(x_pred, x_true):
     x_pred, x_true = np.array(x_pred), np.array(x_true)
@@ -54,20 +34,19 @@ def correlation_plot(x_pred, x_true):
 # Main file
 
 if __name__ == '__main__':
+    
+    
+    ######### DATA LOADING #########
 
     gc.collect()
-
-
-        
-    #path_preproc = 'cubes/' # according to your choice of storage!
-    # number of data to use in the training and validation
     dataset_size = parameters.S
+    D = 2*parameters.r+1
+    epochs = parameters.epochs
     path_preproc = './cubes/'
 
-    # ======= CNN ======
-    # load and prepare dataset with shape (dataset_size, input_type, channel_size, xdim, ydim, zdim)
+
+
     if (parameters.net_type == 'CNN'):
-        D = 2*parameters.r+1
         X = np.zeros((dataset_size, 2, 1, D, D, D))
         for i in range(dataset_size):
             n_src = np.load('%sn_src_i%d.npy' % (path_preproc, i), allow_pickle=True)
@@ -92,11 +71,9 @@ if __name__ == '__main__':
         del X_train
         del X_valid
         gc.collect()
-    # =================
-    
-    
-    # ======= FNN ======
-    if (parameters.net_type == 'FNN'):
+
+
+    elif (parameters.net_type == 'FNN'):
         batch_size = 128
 
         n_src = np.loadtxt('%sn_src_flatten.txt' % (path_preproc))[:dataset_size]
@@ -109,7 +86,7 @@ if __name__ == '__main__':
         # convert numpy array to torch tensor
         X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :]), torch.Tensor(X_train[:, 1, :])
         X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :]), torch.Tensor(X_valid[:, 1, :])
-    # =================
+
 
 
     y_train = torch.Tensor(y_train)
@@ -131,14 +108,20 @@ if __name__ == '__main__':
     
     
 
-    epochs = parameters.epochs
+    
+    #------------------------------------------------------------------------------------
+    
+    
+    
+    ######## NET INITIALIZATION ######### 
+
+    
 
     if(torch.cuda.is_available()):
         loss_fn = torch.nn.MSELoss().cuda()
     else:
         loss_fn = torch.nn.MSELoss()
-    
-    # INITIALIZATION (depending on first run or not)
+        
     
     if (parameters.first_run == True):
         
@@ -195,15 +178,13 @@ if __name__ == '__main__':
     
     print ('Net initialization successfully completed')
 
-
-    #If you want to test a single batch (then also comment the inner for loop) and if you want to test a single data put batch_size = 1
-    #X_train_src,X_train_igm,y_train = next(iter(train_loader))
-    #X_test_src,X_test_igm,y_test = next(iter(valid_loader))
-    #iter = 0
+    #-------------------------------------------------------------------------------------------------------------------------
 
 
     for epoch in tqdm(range(current_epoch, final_epoch)):
-        #print ('          TRAINING     epoch ',epoch+1,'/', epochs)
+        
+        ##### TRAINING #####
+        
         init_time = time.perf_counter()
         curr_time = init_time
         loss_train = []
@@ -212,7 +193,6 @@ if __name__ == '__main__':
         for iter,(X_train_src,X_train_igm,y_train) in enumerate(train_loader):
             if(torch.cuda.is_available()):
                 X_train_src,X_train_igm,y_train = X_train_src.cuda(), X_train_igm.cuda(), y_train.cuda()
-            #loss_fn = torch.nn.MSELoss()
             optimizer.zero_grad()  # set the gradients to 0
             output= net(X_train_igm, X_train_src) # forward
             loss = loss_fn(output, y_train)  # compute loss function
@@ -222,8 +202,6 @@ if __name__ == '__main__':
             loss.backward()  # backpropagation
             optimizer.step()
 
-            curr_time, d_time, D_time = clock(curr_time, init_time)
-            #print_train(loss, epoch, epochs, iter, train_step, d_time, D_time, R2)    #the number of iterations should be training_set_size/batch_size ---> 3000*0.8/batch_size
             
         loss_train = np.mean(loss_train)
         all_train_losses.append(loss_train) # storage of the training losses
@@ -233,13 +211,9 @@ if __name__ == '__main__':
 
         
         pickle.dump({"train_loss": all_train_losses}, open("./checkpoints/loss_train.txt", "wb")) # it overwrites the previous file
-        #print('\n')
-        #print('Train loss of epoch ', epoch +1,' saved')
-
         pickle.dump({"R2_train": all_R2_train}, open("./checkpoints/R2_train.txt", "wb"))  # it overwrites the previous file
-        #print('R2 Train of epoch ', epoch + 1, ' saved')
 
-        #print('           TESTING     epoch ',epoch+1,'/', epochs,'\n')
+        ##### TEST #####
 
         loss_test = []
         R2_test = []
@@ -260,7 +234,7 @@ if __name__ == '__main__':
         plt.savefig('./checkpoints/corr_plot_%d.png' %(epoch+1), bbox_inches='tight')
         plt.clf()
     
-        # COMPARISONS AND SAVINGS
+        ## COMPARISONS AND SAVINGS ##
 
         loss_test = np.mean(loss_test)
         scheduler.step(loss_test)
@@ -270,11 +244,7 @@ if __name__ == '__main__':
         all_R2_test.append(R2_test)
 
         pickle.dump({"test_loss": all_test_losses}, open("./checkpoints/loss_test.txt", "wb")) # it overwrites the previous file
-        #print('\n')
-        #print('Test loss of epoch ', epoch +1,' saved')
-
         pickle.dump({"R2_test": all_R2_test}, open("./checkpoints/R2_test.txt", "wb"))  # it overwrites the previous file
-        #print('R2 Test of epoch ', epoch + 1, ' saved')
 
         if (loss_test < prev_loss):
             prev_loss = loss_test
@@ -284,7 +254,6 @@ if __name__ == '__main__':
                         'optimizer_state': optimizer.state_dict(),
                         'scheduler_state': scheduler.state_dict(),
                         'loss': prev_loss}, PATH)
-            print ('Model epoch %d saved:' %(epoch+1))
         print('Epoch %d: loss=%.4f, val_loss=%.4f, R2=%.4f, val_R2=%.4f' %(epoch+1, loss_train, loss_test, R2_train, R2_test))
 
 
@@ -295,4 +264,3 @@ if __name__ == '__main__':
                     'optimizer_state': optimizer.state_dict(),
                     'scheduler_state': scheduler.state_dict(),
                     'loss': prev_loss}, PATH)
-        #print('Last model saved')

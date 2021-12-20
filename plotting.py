@@ -2,8 +2,8 @@ import numpy as np, matplotlib.pyplot as plt
 import pickle
 
 path = './checkpoints/'
-loss, val_loss = pickle.load(open("%sloss_train" %path, "rb"))['train_loss'], pickle.load(open("%sloss_test" %path, "rb"))['test_loss']
-R2, val_R2 = pickle.load(open("%sR2_train" %path, "rb"))['R2_train'], pickle.load(open("%sR2_test" %path, "rb"))['R2_test']
+loss, val_loss = pickle.load(open("%sloss_train.txt" %path, "rb"))['train_loss'], pickle.load(open("%sloss_test.txt" %path, "rb"))['test_loss']
+R2, val_R2 = pickle.load(open("%sR2_train.txt" %path, "rb"))['R2_train'], pickle.load(open("%sR2_test.txt" %path, "rb"))['R2_test']
 
 idx_best_mode = np.argmin(val_loss)
 
