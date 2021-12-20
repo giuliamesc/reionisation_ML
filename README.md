@@ -12,7 +12,7 @@ The aim of the project is to enhance Machine Learning usage in the study of the 
 ## Data Loading
 - Download the data from [here](https://drive.google.com/drive/folders/1d-FjkS6f8e1Q5F3k0Yz2rygxk8f7hqS_?usp=sharing)
 - Store them in a folder called `dataset`, on the same level of your local `reionisation_ML` repository
-- **Only for the Convolutional Neural Network**: run the script `generate_neigh.py`, which will generate a folder `cubes` on the same level of your code, containing the input data (which consists of neighborhoods of points) for the CNN
+- Run the script `generate_neigh.py`, which will generate a folder `cubes` on the same level of your code, containing the input data (which consists of neighborhoods of points) for the NN
 
 ## Packages Needed
 We have projected our Neural Network with `torch`, version (INSERT PAOLO'S VERSION).
@@ -35,7 +35,7 @@ The code structure is the following:
 - `FNN.py`, importable script containing the definition of the Fully Connected Neural Network
 - `CNN.py`, importable script containing the definition of the Convolutional Neural Network
 - `neigh_generation.py`, which preprocesses the input for the CNN
-- `parameters.py`, which contains a list of useful parameters
+- `parameters.py`, which contains a list of parameters that you can set here without modifying the main each time (eg.: batch size, number of epochs)
 - `plotting.py`, which generates some plots used for accuracy evaluation of the NNs 
 - Folder `Weekly Meetings` contains our presentations to the tutor with the updates of our work of the week
 - `Report.pdf` is the final 4-pages report delivered
