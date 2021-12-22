@@ -170,6 +170,8 @@ if __name__ == '__main__':
         #loading the information contained in the folder "checkpoints"
         checkpoint = torch.load(PATH)
         net.load_state_dict(checkpoint['model_state'])
+        if (torch.cuda.is_available()):  # for the case of laptop with local GPU
+            net = net.cuda()
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
         current_epoch = checkpoint['epoch'] + 1   # since we save the last epoch done, we have to start from the correct one
