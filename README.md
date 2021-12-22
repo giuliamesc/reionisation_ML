@@ -12,7 +12,7 @@ The aim of the project is to enhance Machine Learning usage in the study of the 
 ## Data Loading
 - Download the data from [here](https://drive.google.com/drive/folders/1d-FjkS6f8e1Q5F3k0Yz2rygxk8f7hqS_?usp=sharing)
 - Store them in a folder called `dataset`, on the same level of your local `reionisation_ML` repository
-- Run the script `generate_neigh.py`, which will generate a folder `cubes` on the same level of your code, containing the input data (which consists of neighborhoods of points) for the NN
+- Run the script `neigh_generation.py`, which will generate a folder `cubes` on the same level of your code, containing the input data (which consists of neighborhoods of points) for the NN
 
 ## Packages Needed
 We have projected our Neural Network with `torch`, version (INSERT PAOLO'S VERSION).
