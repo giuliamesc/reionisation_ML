@@ -8,6 +8,7 @@ class FNN(nn.Module):
     def __init__(self):
         super(FNN, self).__init__()
         
+        ### CANCELLARE ASSOLUTAMENTE
         # MAIN PARAMETERS
         self.kernel_size = 5
         self.padding = (self.kernel_size - 1)//2 
@@ -16,7 +17,7 @@ class FNN(nn.Module):
         self.kernel_pooling = 2
         self.stride_pool = self.kernel_pooling
         
-        # FULLY CONNECTED BRANCH
+        # FULLY CONNECTED UPPER BRANCHES
         self.activation = nn.ELU()
         self.dropout = nn.Dropout(p=0.2)
 
