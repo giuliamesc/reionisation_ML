@@ -15,7 +15,7 @@ The aim of the project is to enhance Machine Learning usage in the study of the 
 - Run the script `neigh_generation.py`, which will generate a folder `cubes` on the same level of your code, containing the input data (which consists of neighborhoods of points) for the NN
 
 ## Packages Needed
-We have projected our Neural Network with `torch`, version (INSERT PAOLO'S VERSION).
+We have projected our Neural Network with `torch`, version `1.10.0`.
 
 The packages that are needed for the project are:
 ### Core
@@ -38,8 +38,8 @@ The code structure is the following:
 - `neigh_generation.py`, which preprocesses the input for the CNN
 - `parameters.py`, which contains a list of parameters that you can set here without modifying the main each time (eg.: batch size, number of epochs)
 - `plotting.py`, which generates some plots used for accuracy evaluation of the NNs 
-- `model_55.pt`, is the best CNN model obtained (corresponding to epoch 55)
 - Folder `Weekly Meetings` contains our presentations to the tutor with the updates of our work of the week
+- Folder `NOME GIUSTO CARTELLA`, containing the best trained model for CNN and FNN
 - `Report.pdf` is the final 4-pages report delivered
 
 ## Instructions for training
@@ -47,4 +47,4 @@ Our code contains a feature which enables to stop the training and then to resta
 - In the first epoch, the status of the net, the losses and the R² score are saved
 - In the following epochs, the above information are stored 1) for the best model 2) for the last epoch, in order to continue from it the next time we restart the training
 
-All these files are stored in the folder `model`.
+All these files are stored in the folder called `checkpoints`.
