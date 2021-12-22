@@ -21,11 +21,12 @@ from os import makedirs
 
     
 def correlation_plot(x_pred, x_true):
-    x_pred, x_true = np.array(x_pred), np.array(x_true)
-    plt.plot(x_true, x_true, 'r-') # y = x
-    plt.plot(x_true, x_true+0.68/2*x_true, 'k-', alpha=0.25)
-    plt.plot(x_true, x_true-0.68/2*x_true, 'k-', alpha=0.25)
-    plt.plot(x_true, x_pred, 'bo') # our actual prediction
+    # function generating a plot with the predicted values for x_i (y-axis) against the true ones (x-axis)
+    x_pred, x_true = np.array(x_pred), np.array(x_true) # conversion into np.array
+    plt.plot(x_true, x_true, 'r-') # plotting the line y = x
+    plt.plot(x_true, x_true+0.68/2*x_true, 'k-', alpha=0.25) # plotting the line y = x+sigma*x
+    plt.plot(x_true, x_true-0.68/2*x_true, 'k-', alpha=0.25) # plotting the line y = x-sigma*x
+    plt.plot(x_true, x_pred, 'bo') # plotting our actual prediction
     plt.ylim(0,1)
     plt.ylabel('prediction')
     
@@ -38,57 +39,61 @@ if __name__ == '__main__':
     
     ######### DATA LOADING #########
 
-    gc.collect()
-    dataset_size = parameters.S
-    D = 2*parameters.r+1
-    epochs = parameters.epochs
-    path_preproc = './cubes/'
-
-
-
-    if (parameters.net_type == 'CNN'):
-        X = np.zeros((dataset_size, 2, 1, D, D, D))
-        for i in range(dataset_size):
-            n_src = np.load('%sn_src_i%d.npy' % (path_preproc, i), allow_pickle=True)
-            n_igm = np.load('%sn_igm_i%d.npy' % (path_preproc, i), allow_pickle=True)
-            X[i, 0] = n_src[np.newaxis, ...]
-            X[i, 1] = n_igm[np.newaxis, ...]
-        y = np.loadtxt('%sxi_flatten.txt' % path_preproc)[:dataset_size]
-
-        # split dataset into trianing (80%) and validation set (test_size = 20%)
-        X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=2021)
-        batch_size = parameters.batch_size
-        train_step = X_train.shape[0]//batch_size # // returns an approximation to integer of the division
-        test_step = X_valid.shape[0]//batch_size
+    gc.collect() # calling the garbage collector for lightening the memory usage
     
-        del X
-        gc.collect()
+    # reading data from parameters.py
+    dataset_size = parameters.S # dataset_size
+    D = 2*parameters.r+1 # COSA SEI?
+    epochs = parameters.epochs # number of epochs
+    path_preproc = './cubes/' # path of the directory in which neighborhoods are stored
+
+
+    # CNN case
+    if (parameters.net_type == 'CNN'):
+        X = np.zeros((dataset_size, 2, 1, D, D, D)) # initializing an empty array for data storage
+        for i in range(dataset_size):
+            n_src = np.load('%sn_src_i%d.npy' % (path_preproc, i), allow_pickle=True) # reading the file where n_src are stored
+            n_igm = np.load('%sn_igm_i%d.npy' % (path_preproc, i), allow_pickle=True) # reading the file where n_igm are stored
+            X[i, 0] = n_src[np.newaxis, ...] # filling with n_src the initialized empty array
+            X[i, 1] = n_igm[np.newaxis, ...] # filling with n_igm the initialized empty array
+        y = np.loadtxt('%sxi_flatten.txt' % path_preproc)[:dataset_size] # reading the file where xi are stored
+
+        # split dataset into trianing and validation set 
+        X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.01, random_state=2021)
+        batch_size = parameters.batch_size # reading the batch_size from parameters.py
+        train_step = X_train.shape[0]//batch_size # number of iterations of training; command // returns an approximation to integer of the division
+        test_step = X_valid.shape[0]//batch_size # number of iterations of training;
+    
+        del X # cleaning X, that is now useless
+        gc.collect() # calling the garbage collector
 
         # convert numpy array to torch tensor
         X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :, :, :, :]), torch.Tensor(X_train[:, 1, :, :, :, :])
         X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :, :, :, :]), torch.Tensor(X_valid[:, 1, :, :, :, :])
 
-        del X_train
+        del X_train # cleaning X_train,X_valid and calling the garbage collector
         del X_valid
         gc.collect()
 
-
+    # FNN case
     elif (parameters.net_type == 'FNN'):
-        batch_size = 128
-
+        batch_size = 128 
+        
+        # loading stored values for n_src,n_igm,xi
         n_src = np.loadtxt('%sn_src_flatten.txt' % (path_preproc))[:dataset_size]
         n_igm = np.loadtxt('%sn_igm_flatten.txt' % (path_preproc))[:dataset_size]
         X = np.vstack((n_src, n_igm)).T[..., np.newaxis]
         y = np.loadtxt(path_preproc+'xi_flatten.txt')[:dataset_size]
-
-        X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=2021)
+        
+        # split dataset into trianing and validation set
+        X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.1, random_state=2021)
     
         # convert numpy array to torch tensor
         X_train_src, X_train_igm = torch.Tensor(X_train[:, 0, :]), torch.Tensor(X_train[:, 1, :])
         X_valid_src, X_valid_igm = torch.Tensor(X_valid[:, 0, :]), torch.Tensor(X_valid[:, 1, :])
 
 
-
+    # convert numpy array to torch tensor
     y_train = torch.Tensor(y_train)
     y_valid = torch.Tensor(y_valid)
 
@@ -99,7 +104,8 @@ if __name__ == '__main__':
     # create data loader to use in epoch for loop, for a batch of size batch_size
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True)
-
+    
+    # cleaning some memory
     del train_dataset
     del valid_dataset
     gc.collect()
@@ -118,60 +124,66 @@ if __name__ == '__main__':
     
 
     if(torch.cuda.is_available()):
-        loss_fn = torch.nn.MSELoss().cuda()
+        loss_fn = torch.nn.MSELoss().cuda() # for the case of laptop with local GPU
     else:
         loss_fn = torch.nn.MSELoss()
         
-    
+    # case of the first run
     if (parameters.first_run == True):
         
+        # creation of the folder "checkpoints"
         makedirs('./checkpoints/', exist_ok=True)
         rmtree('./checkpoints/') # to remove all previous checkpoint files
         makedirs('./checkpoints/') 
         
+        # loading the right NN class
         if (parameters.net_type=='CNN'):
             net = CNN.CNN()
         else:
             net = FNN.FNN()
             
-        if(torch.cuda.is_available()):
-            net = net.cuda()
+        if(torch.cuda.is_available()): # for the case of laptop with local GPU
+            net = net.cuda() 
             
-        optimizer = optim.Adam(net.parameters(), lr=1e-3, weight_decay=1e-4)  #Adam is an adaptive learning rate method
-        scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 10, min_lr=1e-12, verbose=True)
+        optimizer = optim.Adam(net.parameters(), lr=1e-3, weight_decay=1e-4)  #optimizer Adam; adaptive learning rate method
+        scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 10, min_lr=1e-12, verbose=True) # CHE FA QUESTO?
         current_epoch = 0
         final_epoch = epochs
         prev_loss = 10**2 # high initial value
         all_test_losses = [] # will contain all the test losses of the different epochs
         all_train_losses = [] # will contain all the train losses of the different epochs
-        all_R2_train = []
-        all_R2_test = []
+        all_R2_train = [] # will contain all the train R2s of the different epochs
+        all_R2_test = [] # will contain all the test R2s of the different epochs
     else:
-        #Resume the training
+        # if it's not the first run, resume the training from last_model
         PATH = './checkpoints/last_model.pt'
         
+        # loading the right NN class
         if (parameters.net_type=='CNN'):
             net = CNN.CNN()
         else:
             net = FNN.FNN()
         
-        optimizer = optim.Adam(net.parameters(), lr=1e-3, weight_decay=1e-4)
-        scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-12, verbose=True)
+        optimizer = optim.Adam(net.parameters(), lr=1e-3, weight_decay=1e-4) #optimizer Adam; adaptive learning rate method
+        scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-12, verbose=True) # CHE FA QUESTO?
+        
+        #loading the information contained in the folder "checkpoints"
         checkpoint = torch.load(PATH)
         net.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
-        current_epoch = checkpoint['epoch'] + 1   #Because we save the last epoch done, so we have to start from the correct one
+        current_epoch = checkpoint['epoch'] + 1   # since we save the last epoch done, we have to start from the correct one
         prev_loss = checkpoint['loss']
-        final_epoch = current_epoch + epochs
+        final_epoch = current_epoch + epochs # updating the number of the final epoch
 
-        train_losses = pickle.load(open("./checkpoints/loss_train.txt", "rb"))  #To load the vector of train losses
-        test_losses = pickle.load(open("./checkpoints/loss_test.txt", "rb"))    # To load the vector of test losses
+        train_losses = pickle.load(open("./checkpoints/loss_train.txt", "rb"))  # to load the vector of train losses
+        test_losses = pickle.load(open("./checkpoints/loss_test.txt", "rb"))    # to load the vector of test losses
         all_test_losses = test_losses["test_loss"]
         all_train_losses = train_losses["train_loss"]
+        
         #Loading R2 lists of train and test
-        R2_train = pickle.load(open("./checkpoints/R2_train.txt","rb"))
-        R2_test = pickle.load(open("./checkpoints/R2_test.txt", "rb"))
+        R2_train = pickle.load(open("./checkpoints/R2_train.txt","rb")) # to load the vector of train R2s
+        R2_test = pickle.load(open("./checkpoints/R2_test.txt", "rb")) # to load the vector of test R2s
         all_R2_train = R2_train["R2_train"]
         all_R2_test = R2_test["R2_test"]
      
@@ -185,29 +197,29 @@ if __name__ == '__main__':
         
         ##### TRAINING #####
         
-        init_time = time.perf_counter()
+        init_time = time.perf_counter() # to track the computational time
         curr_time = init_time
         loss_train = []
         R2_train = []
-        net.train()   #Not fundamental, just to distinguish net.train() and net.eval() when we do validation
+        net.train()   # not fundamental, just to distinguish net.train() and net.eval() when we do validation
         for iter,(X_train_src,X_train_igm,y_train) in enumerate(train_loader):
-            if(torch.cuda.is_available()):
+            if(torch.cuda.is_available()): # for a laptop with local GPU
                 X_train_src,X_train_igm,y_train = X_train_src.cuda(), X_train_igm.cuda(), y_train.cuda()
             optimizer.zero_grad()  # set the gradients to 0
-            output= net(X_train_igm, X_train_src) # forward
-            loss = loss_fn(output, y_train)  # compute loss function
+            output= net(X_train_igm, X_train_src) # forward pass
+            loss = loss_fn(output, y_train)  # computing loss function
             loss_train.append(loss.item()) # storing the training losses
-            R2 = r2_score(y_train.cpu().detach().numpy(), output.cpu().detach().numpy())
-            R2_train.append(R2)
+            R2 = r2_score(y_train.cpu().detach().numpy(), output.cpu().detach().numpy()) # computing R2 score
+            R2_train.append(R2) # storing R2 score
             loss.backward()  # backpropagation
-            optimizer.step()
+            optimizer.step() # optimizer step
 
             
-        loss_train = np.mean(loss_train)
+        loss_train = np.mean(loss_train) # mean over all the iterations of the epoch
         all_train_losses.append(loss_train) # storage of the training losses
 
-        R2_train = np.mean(R2_train)
-        all_R2_train.append(R2_train)
+        R2_train = np.mean(R2_train) # mean over all the iterations of the epoch
+        all_R2_train.append(R2_train) # storage of the training R2
 
         
         pickle.dump({"train_loss": all_train_losses}, open("./checkpoints/loss_train.txt", "wb")) # it overwrites the previous file
@@ -217,36 +229,37 @@ if __name__ == '__main__':
 
         loss_test = []
         R2_test = []
-        net.eval()  #It is necessary in order to do validation
+        net.eval()  # it is necessary in order to do validation
         for iter,(X_test_src,X_test_igm,y_test) in enumerate(valid_loader):
-            if(torch.cuda.is_available()):
+            if(torch.cuda.is_available()): # for a laptop with local GPU
                 X_test_src, X_test_igm, y_test = X_test_src.cuda(), X_test_igm.cuda(), y_test.cuda()
-            # Evaluate the network (forward pass)
-            #loss_fn = torch.nn.MSELoss()
+                
+            # evaluate the network (forward pass)
             prediction = net(X_test_igm,X_test_src)
+            # computing and storing loss and R2 score
             R2 = r2_score(y_test.cpu().detach().numpy(),prediction.cpu().detach().numpy())
             R2_test.append(R2)
             loss = loss_fn(prediction,y_test)
             loss_test.append(loss.item())
-            correlation_plot(prediction.cpu().detach().numpy(), y_test.cpu().detach().numpy())
+            correlation_plot(prediction.cpu().detach().numpy(), y_test.cpu().detach().numpy()) # correlation plot
 
-            #print_test(loss, epoch, epochs, iter, test_step, R2)
-        plt.savefig('./checkpoints/corr_plot_%d.png' %(epoch+1), bbox_inches='tight')
-        plt.clf()
+
+        plt.savefig('./checkpoints/corr_plot_%d.png' %(epoch+1), bbox_inches='tight') # saving correlation plot
+        plt.clf() # COSA FA?
     
         ## COMPARISONS AND SAVINGS ##
 
-        loss_test = np.mean(loss_test)
-        scheduler.step(loss_test)
-        all_test_losses.append(loss_test)
+        loss_test = np.mean(loss_test) # mean over all the iterations
+        scheduler.step(loss_test) # COSA FA
+        all_test_losses.append(loss_test) # storage
 
-        R2_test = np.mean(R2_test)
-        all_R2_test.append(R2_test)
+        R2_test = np.mean(R2_test) # mean over all the iterations
+        all_R2_test.append(R2_test) # storage
 
         pickle.dump({"test_loss": all_test_losses}, open("./checkpoints/loss_test.txt", "wb")) # it overwrites the previous file
         pickle.dump({"R2_test": all_R2_test}, open("./checkpoints/R2_test.txt", "wb"))  # it overwrites the previous file
 
-        if (loss_test < prev_loss):
+        if (loss_test < prev_loss): # if our current model is better, update the best model saving the net state, loss value and R2 score
             prev_loss = loss_test
             PATH = './checkpoints/model_%d.pt' % epoch
             torch.save({'epoch': epoch,
@@ -257,7 +270,7 @@ if __name__ == '__main__':
         print('Epoch %d: loss=%.4f, val_loss=%.4f, R2=%.4f, val_R2=%.4f' %(epoch+1, loss_train, loss_test, R2_train, R2_test))
 
 
-        # Saving the last model used (to be sure, we save it each epoch)
+        # saving the last model used (to be sure, we save it each epoch)
         PATH = './checkpoints/last_model.pt'
         torch.save({'epoch': epoch,
                     'model_state': net.state_dict(),
