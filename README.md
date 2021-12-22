@@ -12,7 +12,6 @@ The aim of the project is to enhance Machine Learning usage in the study of the 
 ## Data Loading
 - Download the data from [here](https://drive.google.com/drive/folders/1d-FjkS6f8e1Q5F3k0Yz2rygxk8f7hqS_?usp=sharing)
 - Store them in a folder called `dataset`, on the same level of your local `reionisation_ML` repository
-- Run the script `neigh_generation.py`, which will generate a folder `cubes` on the same level of your code, containing the input data (which consists of neighborhoods of points) for the NN
 
 ## Packages Needed
 We have projected our Neural Network with `torch`, version `1.10.0`.
@@ -38,8 +37,8 @@ The code structure is the following:
 - `neigh_generation.py`, which preprocesses the input for the CNN
 - `parameters.py`, which contains a list of parameters that you can set here without modifying the main each time (eg.: batch size, number of epochs)
 - `plotting.py`, which generates some plots used for accuracy evaluation of the NNs 
-- `Weekly Meetings` folder contains our presentations to the tutor with the updates of our work of the week
-- `best_models` folder, containing the best and last-epoch trained model for CNN and FNN
+- `Weekly Meetings` folder, containing our presentations to the tutor with the updates of our work of the week
+- `best_models` folder, containing the best and last-epoch trained models for CNN and FNN
 - `Report.pdf` is the final 4-pages report delivered
 
 ## Auto-saving
