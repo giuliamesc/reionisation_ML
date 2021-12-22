@@ -1,4 +1,4 @@
-# ML4Science Project: The Epoch of Reionisation :milky_way:
+# MachineLearning4Science Project: The Epoch of Reionisation :milky_way:
 Repository for the second project of the course CS-433 Machine Learning @ EPFL. 
 The team is composed by:
 - *Matteo Calafà* ([@Teocala](https://github.com/Teocala))
