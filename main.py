@@ -43,7 +43,7 @@ if __name__ == '__main__':
     
     # reading data from parameters.py
     dataset_size = parameters.S # dataset_size
-    D = 2*parameters.r+1 # COSA SEI?
+    D = 2*parameters.r+1 # cube diameter
     epochs = parameters.epochs # number of epochs
     path_preproc = './cubes/' # path of the directory in which neighborhoods are stored
 
@@ -146,7 +146,7 @@ if __name__ == '__main__':
             net = net.cuda() 
             
         optimizer = optim.Adam(net.parameters(), lr=1e-3, weight_decay=1e-4)  #optimizer Adam; adaptive learning rate method
-        scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 10, min_lr=1e-12, verbose=True) # CHE FA QUESTO?
+        scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 10, min_lr=1e-12, verbose=True) # a scheduler to adjust the learning rate
         current_epoch = 0
         final_epoch = epochs
         prev_loss = 10**2 # high initial value
@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
 
         plt.savefig('./checkpoints/corr_plot_%d.png' %(epoch+1), bbox_inches='tight') # saving correlation plot
-        plt.clf() # COSA FA?
+        plt.clf() # to clear the current figure
     
         ## COMPARISONS AND SAVINGS ##
 
