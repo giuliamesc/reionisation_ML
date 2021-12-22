@@ -38,13 +38,25 @@ The code structure is the following:
 - `neigh_generation.py`, which preprocesses the input for the CNN
 - `parameters.py`, which contains a list of parameters that you can set here without modifying the main each time (eg.: batch size, number of epochs)
 - `plotting.py`, which generates some plots used for accuracy evaluation of the NNs 
-- Folder `Weekly Meetings` contains our presentations to the tutor with the updates of our work of the week
-- Folder `best_models`, containing the best and last-epoch trained model for CNN and FNN
+- `Weekly Meetings` folder contains our presentations to the tutor with the updates of our work of the week
+- `best_models` folder, containing the best and last-epoch trained model for CNN and FNN
 - `Report.pdf` is the final 4-pages report delivered
 
-## Instructions for training
+## Auto-saving
 Our code contains a feature which enables to stop the training and then to restart it from the point on which we interrupted it; thanks to this strategy, the net can be trained on a laptop without being forced to wait until a very long training is completed, and at the same time ensuring a backup in case something goes wrong. 
 - In the first epoch, the status of the net, the losses and the R² score are saved
 - In the following epochs, the above information are stored 1) for the best model 2) for the last epoch, in order to continue from it the next time we restart the training
 
-All these files are stored in the folder called `checkpoints`.
+All these files are stored in a folder automatically created and called `checkpoints`.
+
+## Instructions for training
+To train your net, the following steps need to be taken:
+1) Check that the dataset is locally stored (see Data Loading description)
+2) Set the `parameters.py` variables
+3) Run `neigh_generation.py` to generate the neighbors
+4) Run  `main.py` to do the training
+5) Run `plotting.py` to generate and save the loss plot
+
+Some further information:
+- In case you need to restart the training from where you interrupted, you just need to open `parameters.py` and switch the "first_run" variable to False. Then you can run `main.py` again.
+- All the plots are saved in `checkpoints` while all the neighbors are saved in `cubes`. These folders are automatically created and later automatically resetted at the beginning of the following training.
