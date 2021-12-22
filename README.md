@@ -39,7 +39,7 @@ The code structure is the following:
 - `parameters.py`, which contains a list of parameters that you can set here without modifying the main each time (eg.: batch size, number of epochs)
 - `plotting.py`, which generates some plots used for accuracy evaluation of the NNs 
 - Folder `Weekly Meetings` contains our presentations to the tutor with the updates of our work of the week
-- Folder `NOME GIUSTO CARTELLA`, containing the best trained model for CNN and FNN
+- Folder `best_models`, containing the best and last-epoch trained model for CNN and FNN
 - `Report.pdf` is the final 4-pages report delivered
 
 ## Instructions for training
