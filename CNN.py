@@ -15,7 +15,7 @@ class CNN(nn.Module):
         
         self.kernel_pooling = 2 # setting the kernel size for pooling layers
         self.stride_pool = self.kernel_pooling
-        self.in_feat_param = 8 * parameters.r**3 # cosa è?????????
+        self.in_feat_param = 8 * parameters.r**3 # right input dimension of the final fully connected central branch
                 
         # CONVOLUTIONAL BRANCH
         self.conv3d_1 = nn.Conv3d(in_channels=1, out_channels=16, kernel_size=self.kernel_size, stride=self.stride_conv, padding=self.padding) # convolutional layer
