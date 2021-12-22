@@ -38,6 +38,7 @@ The code structure is the following:
 - `neigh_generation.py`, which preprocesses the input for the CNN
 - `parameters.py`, which contains a list of parameters that you can set here without modifying the main each time (eg.: batch size, number of epochs)
 - `plotting.py`, which generates some plots used for accuracy evaluation of the NNs 
+- `last_model.pt`, includes the best CNN model obtained
 - Folder `Weekly Meetings` contains our presentations to the tutor with the updates of our work of the week
 - `Report.pdf` is the final 4-pages report delivered
 
