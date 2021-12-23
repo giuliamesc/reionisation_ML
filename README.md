@@ -1,4 +1,4 @@
-# MachineLearning4Science Project: Machine Learning replaces Radiative Transfer :milky_way:
+# ML4Science Project: Machine Learning replaces Radiative Transfer :milky_way:
 Repository for the second project of the course CS-433 Machine Learning @ EPFL. 
 The team is composed by:
 - *Matteo Calafà* ([@Teocala](https://github.com/Teocala))
