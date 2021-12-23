@@ -52,7 +52,7 @@ All these files are stored in a folder automatically created and called `checkpo
 To train your net, the following steps need to be taken:
 1) Check that the dataset is locally stored (see Data Loading description)
 2) Set the `parameters.py` variables
-3) Run `neigh_generation.py` to generate the neighbors - or download an already generated folder `cubes` from [here](https://drive.google.com/drive/folders/1OgZ0e9aMdPCwfxn9vt0tBy0betpqmIlC?usp=sharing) and place it on the same level of your `main.py`
+3) Run `neigh_generation.py` to generate the neighbors - or download an already generated folder `cubes` from [here](https://drive.google.com/drive/folders/1OgZ0e9aMdPCwfxn9vt0tBy0betpqmIlC?usp=sharing) unzip it, name it as `cubes` and place it on the same level of your `main.py`
 4) Run  `main.py` to do the training
 5) Run `plotting.py` to generate and save the loss plot
 
