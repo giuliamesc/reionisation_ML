@@ -67,8 +67,8 @@ for count in range(S):
     subvol_src = n_src[i-(r+1):i+r, j-(r+1):j+r, k-(r+1):k+r] # extraction of the neighborhood for n_src
     
     norm_subvol_igm, norm_subvol_src = subvol_igm, subvol_src  # change of name since they are already normalized
-    assert norm_subvol_igm.shape == (2*r+1,2*r+1,2*r+1) # COSA FA????
-    assert norm_subvol_src.shape == (2*r+1,2*r+1,2*r+1) # COSA FA????
+    assert norm_subvol_igm.shape == (2*r+1,2*r+1,2*r+1) # checking the shape of neighborhoods is right
+    assert norm_subvol_src.shape == (2*r+1,2*r+1,2*r+1) # checking the shape of neighborhoods is right
     
     # saving neighborhoods in .npy files, xi in .txt files
     np.save('%sn_igm_i%d.npy' %(path_out, count), norm_subvol_igm)
