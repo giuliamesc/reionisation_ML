@@ -165,7 +165,7 @@ if __name__ == '__main__':
             net = FNN.FNN()
         
         optimizer = optim.Adam(net.parameters(), lr=1e-3, weight_decay=1e-4) #optimizer Adam; adaptive learning rate method
-        scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-12, verbose=True) # CHE FA QUESTO?
+        scheduler = ReduceLROnPlateau(optimizer = optimizer, mode = 'min', factor = 0.1, patience = 7, min_lr = 1e-12, verbose=True) # a scheduler to adjust the learning rate
         
         #loading the information contained in the folder "checkpoints"
         checkpoint = torch.load(PATH)
@@ -252,7 +252,7 @@ if __name__ == '__main__':
         ## COMPARISONS AND SAVINGS ##
 
         loss_test = np.mean(loss_test) # mean over all the iterations
-        scheduler.step(loss_test) # COSA FA
+        scheduler.step(loss_test) # scheduler step
         all_test_losses.append(loss_test) # storage
 
         R2_test = np.mean(R2_test) # mean over all the iterations
